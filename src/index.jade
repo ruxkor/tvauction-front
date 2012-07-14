@@ -1,0 +1,50 @@
+!!! 5
+html(lang='en', ng-app='tvAuction')
+head
+    meta(charset='utf-8')
+    title Tv Auction
+    link(rel='stylesheet', href='lib/bootstrap/css/bootstrap.css')
+    link(rel='stylesheet', href='css/app.css')
+  body
+
+    .navbar
+      .navbar-inner
+        .container
+          a.brand(href='#') Bla
+          ul.nav
+            li.active: a(href='#') Blabla
+    .row
+      // left side menu
+      .span4
+        ul.nav.nav-list
+          li.nav-header Campaigns
+          li: a List Active Campaigns
+          li: a List Finished Campaigns
+          li: a(href='#/campaign/create') Create Campaign
+
+          li.nav-header Auctions
+          li: a List Auctions
+
+          li.nav-header Adverts
+          li: a Import Advert
+          li: a Manage Adverts
+
+          li.nav-header Support
+          li: a Help
+      .span8
+        div(ng-view)
+        | Content Here
+    div
+      | Angular seed app: v
+      span(app-version-bla)
+      span(bla)
+
+
+    script(src='lib/jquery/jquery-1.7.2.js')
+    script(src='lib/bootstrap/bootstrap-2.0.2.js')
+    script(src='lib/angular/angular.js')
+    script(src='js/app.js')
+    script(src='js/services.js')
+    script(src='js/controllers.js')
+    script(src='js/filters.js')
+    script(src='js/directives.js')
