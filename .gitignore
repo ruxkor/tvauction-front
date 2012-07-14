@@ -1,0 +1,12 @@
+**/.DS_Store
+nbproject
+manifest.mf
+build.xml
+
+.project
+.settings
+.idea/*
+
+app/js/*.js
+app/*.html
+app/partials/*.html
