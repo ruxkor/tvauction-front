@@ -9,7 +9,12 @@ mockCampaign =
   budget: 100
   restrictions:
     timeframe:
-      active: 0
+      active: 1
+      entries: [
+        [0,0]
+        [0,1]
+        [1,5]
+      ]
     auction:
       active: 1
   advert:

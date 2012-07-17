@@ -12,15 +12,12 @@ CampaignCreateCtrl = ($scope, CampaignManager, AuctionManager) ->
 #
 
 
-CampaignCreateCalendarCtrl = ($scope, $location, CampaignManager, AuctionManager) ->
+CampaignCreateCalendarCtrl = ($scope, CampaignManager, AuctionManager) ->
   campaign_id = 10
   campaign = $scope.campaign = CampaignManager.get campaign_id
   auction = $scope.auction = AuctionManager.get campaign.auction_id
 
-  console.info campaign.name
-  if not campaign.name
-    $location.path = '/'
 
 
 CampaignCreateCtrl.$inject = ['$scope', 'CampaignManager','AuctionManager']
-CampaignCreateCalendarCtrl.$inject = ['$scope', '$location', 'CampaignManager','AuctionManager']
+CampaignCreateCalendarCtrl.$inject = ['$scope', 'CampaignManager','AuctionManager']

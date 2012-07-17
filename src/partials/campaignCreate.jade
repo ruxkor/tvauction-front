@@ -120,10 +120,12 @@ h2
   hr
   .span4
     h4 Restrict days and times
-  .span5
-    pre
-      | Missing 
-      | Missing
+.row
+  .span9
+    div.timerestrictions(timerestrictions, ng-model="campaign.restrictions.timeframe.entries")
+.row
+  .span9
+    {{campaign.restrictions.timeframe.entries}}
 
 
 .row
@@ -149,8 +151,6 @@ h2
   hr
   .span4
     h4 Demographic audience
-  .span5
-    div.demographicaudience
     pre
       | Missing 
       | Missing
