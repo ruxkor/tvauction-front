@@ -3,8 +3,11 @@
 angular
 	.module('tvAuction', ['tvAuction.filters','tvAuction.services','tvAuction.directives'])
 	.config ['$routeProvider', ($routeProvider) ->
-		$routeProvider.when '/campaignCreate',
+		$routeProvider.when '/campaign/create',
 			templateUrl: 'partials/campaignCreate.html'
 			controller: CampaignCreateCtrl
-		$routeProvider.otherwise {redirectTo: '/campaignCreate'}
+		$routeProvider.when '/campaign/create/calendar',
+			templateUrl: 'partials/campaignCreateCalendar.html'
+			controller: CampaignCreateCalendarCtrl
+		$routeProvider.otherwise {redirectTo: '/campaign/create'}
   ]

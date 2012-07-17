@@ -1,5 +1,180 @@
+h1 Create Campaign
+h2
+  | General
+  span.info General Settings
 
-h3 some header
+.row
+  .span2
+    label Campaign name
+  .span3
+    input.span2(type="text",ng-model="campaign.name",required)
+  .span4.info.right
+    a Clone existing campaign
 
-pre
-  | {{exampleValue}}
+.row
+  .span2
+    label Maximum Budget
+  .span3
+      .control-group
+        .controls
+          .input-append
+            input.span2.input-medium(type="number", min="{{campaign.minBudget()}}", ng-model="campaign.budget", required)
+            span.add-on &euro;
+  .span2.info
+    ul.nopoints
+      li minimum: {{campaign.minBudget()}} &euro;
+      li
+        | suggested: {{campaign.suggestedBudget()}} &euro; 
+        a(ng-click="campaign.budget = campaign.suggestedBudget()", ng-show="campaign.budget < campaign.suggestedBudget()") use
+.row
+  .span2
+    label Target: 
+      strong Reach
+  .span3
+      .control-group
+        .controls
+          .input-append
+            input.span2.input-medium(type="number", min="0", required)
+            span.add-on Impr.
+  .span2.info
+    ul.nopoints
+      li: a change target
+
+
+// advert
+h2
+  | Advert
+  span.info The advert used for this campaign
+div.row
+  .span5
+    table.table.table-condensed
+      thead
+        tr
+          th {{campaign.advert.name}}
+      tr
+        td Length:
+        td {{campaign.advert.duration}} s
+      tr
+        td Tags:
+        td
+          ul.nopoints
+            li(ng-repeat="tag in campaign.advert.tags") {{tag}}
+
+  .span3
+    img(ng-src="{{campaign.advert.thumb}}")
+  .span1.info.right
+    a Change
+
+
+
+
+// auction
+h2
+  | Auction
+  span.info Details about the auction in which the campaign should take place
+
+.row
+  .span5
+    h4 
+      | Auction # {{auction.id}}
+      span.info 2012-01-02 to 2012-01-15
+    table.table.table-condensed
+      thead
+        tr
+          th Attribute
+          th Total
+          th Selected
+          th &nbsp;
+      tbody
+        tr
+          td # slots
+          td {{auction.slots.length}}
+          td {{campaign.slots.length}}
+          td: a(href="#/campaign/create/calendar") details
+        tr
+          td: em more..
+          td &nbsp;
+          td &nbsp;
+          td &nbsp;
+
+h2
+  | Attributes
+  span.info Use attributes to pre-select blocks you retain interesting
+
+.row
+  .span4
+    h4 Timeframe
+  .span5
+    ul.nopoints
+      li
+        label
+          input(type="radio", name="attr-timeframe-restrict", ng-model="campaign.restrictions.timeframe.active", value="0")
+          |  No day or time restriction
+      li
+        label
+          input(type="radio", name="attr-timeframe-restrict", ng-model="campaign.restrictions.timeframe.active", value="1")
+          |  Restrict days and time I would like my ad to run
+
+
+.row(ng-show="campaign.restrictions.timeframe.active")
+  hr
+  .span4
+    h4 Restrict days and times
+  .span5
+    pre
+      | Missing 
+      | Missing
+
+
+.row
+  hr
+  .span4
+    h4 Auction-specific
+  .span5
+    ul.nopoints
+      li
+        label 
+          input(type="radio", name="attr-auction-restrict", ng-model="campaign.restrictions.auction.active", value="0")
+          |  No auction-specific restrictions
+      li
+        label
+          input(type="radio", name="attr-auction-restrict", ng-model="campaign.restrictions.auction.active", value="1")
+          |  Choose main demographic audience
+      li
+        label
+          input(type="radio", name="attr-auction-restrict", ng-model="campaign.restrictions.auction.active", value="2")
+          |  Free definition of criteria (advanced)
+
+.row(ng-show="campaign.restrictions.auction.active==1")
+  hr
+  .span4
+    h4 Demographic audience
+  .span5
+    div.demographicaudience
+    pre
+      | Missing 
+      | Missing
+
+.row(ng-show="campaign.restrictions.auction.active==2")
+  hr
+  .span4
+    h4 Free definition of criteria
+  .span4
+    pre
+      | Missing 
+      | Missing
+
+h2
+  | Actions
+  span.info Choose to save, publish, or reset the campaign
+
+.row
+  .span9
+    button.btn.btn-primary.btn-large
+      i.icon-ok.icon-white
+      |  Save Campaign
+    button.btn.btn-large
+      i.icon-trash
+      |  Reset
+
+hr

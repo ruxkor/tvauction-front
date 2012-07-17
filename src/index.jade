@@ -15,7 +15,7 @@ head
             li.active: a(href='#') Blabla
     .row
       // left side menu
-      .span4
+      .span3
         ul.nav.nav-list
           li.nav-header Campaigns
           li: a List Active Campaigns
@@ -31,9 +31,8 @@ head
 
           li.nav-header Support
           li: a Help
-      .span8
+      .span9
         div(ng-view)
-        | Content Here
     div
       | Angular seed app: v
       span(app-version-bla)
@@ -42,6 +41,7 @@ head
 
     script(src='lib/jquery/jquery-1.7.2.js')
     script(src='lib/bootstrap/bootstrap-2.0.2.js')
+    script(src='lib/d3/d3.v2.js')
     script(src='lib/angular/angular.js')
     script(src='js/app.js')
     script(src='js/services.js')
