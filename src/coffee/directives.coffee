@@ -123,8 +123,8 @@ module.directive 'timerestrictions', ['$parse', ($parse) ->
         brush_dims = d3.event.target.extent()
         fields.classed('inselection', (d) ->
           field_dims = [
-            [x(d[0]+1)+0.5*x.rangeBand(),y(d[1]+1)+0.5*y.rangeBand()],
-            [x(d[0]+1)+0.5*x.rangeBand(),y(d[1]+1)+0.5*y.rangeBand()]
+            [x(d[0]+1)+x.rangeBand(),y(d[1]+1)+y.rangeBand()]
+            [x(d[0]+1),y(d[1]+1)]
           ]
           brush_dims[0][0] <= field_dims[0][0] &&
           brush_dims[1][0] >= field_dims[1][0] &&
@@ -149,7 +149,6 @@ module.directive 'timerestrictions', ['$parse', ($parse) ->
 
       clearselection = ->
         fields.classed('active', false)
-        console.info ctrl, attr
         ngModel.assign scope, []
         scope.$digest()
 

@@ -18,7 +18,7 @@ h2
       .control-group
         .controls
           .input-append
-            input.span2.input-medium(type="number", min="{{campaign.minBudget()}}", ng-model="campaign.budget", required)
+            input.span2.input-medium(type="number", min="{{campaign.minBudget()}}", step="100", ng-model="campaign.budget", required)
             span.add-on &euro;
   .span2.info
     ul.nopoints
@@ -29,12 +29,12 @@ h2
 .row
   .span2
     label Target: 
-      strong Reach
+      strong {{campaign.target.type}}
   .span3
       .control-group
         .controls
           .input-append
-            input.span2.input-medium(type="number", min="0", required)
+            input.span2.input-medium(ng-model="campaign.target.quantity", type="number", min="0", required)
             span.add-on Impr.
   .span2.info
     ul.nopoints
@@ -45,7 +45,7 @@ h2
 h2
   | Advert
   span.info The advert used for this campaign
-div.row
+.row
   .span5
     table.table.table-condensed
       thead
@@ -88,8 +88,8 @@ h2
       tbody
         tr
           td # slots
-          td {{auction.slots.length}}
           td {{campaign.slots.length}}
+          td {{getActiveSlots().length}}
           td: a(href="#/campaign/create/calendar") details
         tr
           td: em more..
@@ -116,16 +116,14 @@ h2
           |  Restrict days and time I would like my ad to run
 
 
-.row(ng-show="campaign.restrictions.timeframe.active")
-  hr
-  .span4
-    h4 Restrict days and times
-.row
-  .span9
-    div.timerestrictions(timerestrictions, ng-model="campaign.restrictions.timeframe.entries")
-.row
-  .span9
-    {{campaign.restrictions.timeframe.entries}}
+div(ng-show="campaign.restrictions.timeframe.active")
+  .row
+    hr
+    .span4
+      h4 Restrict days and times
+  .row
+    .span9
+      .timerestrictions(timerestrictions, ng-model="campaign.restrictions.timeframe.entries")
 
 
 .row
@@ -160,10 +158,11 @@ h2
   .span4
     h4 Free definition of criteria
   .span4
-    pre
-      | Missing 
-      | Missing
-
+    table.table.table-condensed
+      tr
+        td Category
+        td
+          select(ng-model="campaign.restrictions.auction.categories", ng-options="c for c in auction.categories", multiple)
 h2
   | Actions
   span.info Choose to save, publish, or reset the campaign

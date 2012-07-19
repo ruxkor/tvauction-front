@@ -4,9 +4,10 @@ mockCampaign =
   id: 1
   user_id: 1
   auction_id: 1
-  target_type: 'reach'
-  target: 300
   budget: 100
+  target:
+    type: 'reach'
+    quantity: 300
   restrictions:
     timeframe:
       active: 1
@@ -17,6 +18,7 @@ mockCampaign =
       ]
     auction:
       active: 1
+      categories: []
   advert:
     name: 'my advert'
     thumb: 'img/example_advert.jpg'
@@ -25,40 +27,90 @@ mockCampaign =
       'owls'
       'animals'
     ]
-  slots: [
-      id: 10
-      active: true
-      target: 100
-    ,
-      id: 12
-      active: true
-      target: 100
-    ,
-      id: 15
-      active: true
-      target: 100
-  ]
+  slots: []
+  #slots: [
+      #id: 10
+      #active: true
+      #target: 100
+    #,
+      #id: 12
+      #active: true
+      #target: 100
+    #,
+      #id: 15
+      #active: true
+      #target: 100
+  #]
 
 mockAuction =
   id: 1
   from: new Date("2012-01-02 00:00:00")
   to: new Date("2012-01-16 00:00:00")
-  slots: {id: i, duration: 120, reach: 1000} for i in [0...20]
+  categories: [
+    'kids'
+    'comedy'
+    'action'
+    'cartoon'
+    'documentary'
+    'thriller'
+    'mystery'
+    'animals'
+    'historic'
+    'romance'
+    'sitcom'
+    'adult'
+  ]
+  slots: []
 
+slot_baseline = 100000
+slot_price_baseline = 1.0
+slot_dates = d3.time.hours(mockAuction.from, mockAuction.to)[0...-1]
+slot_reach = (date) ->
+  x = (date.getHours()-3)*Math.PI/12
+  return -0.2*Math.cos(x)
+
+slot_type = (date, slot_nr) ->
+  pr1 = 13
+  pr2 = 17
+  categories = _.uniq([
+    mockAuction.categories[slot_nr % pr1 % mockAuction.categories.length]
+    mockAuction.categories[slot_nr % pr2 % mockAuction.categories.length]
+  ])
+
+
+mockAuction.slots = _.map slot_dates, (slot_date, nr) ->
+  modifier = slot_reach slot_date, nr
+  reach = Math.round(slot_baseline*(1+modifier))
+  price = 0.01*Math.round(100*slot_price_baseline*(1+(if modifier>=0 then 1 else -1)*Math.sqrt(Math.abs(modifier))))
+  return {
+    id: nr
+    date: slot_date
+    duration: 120
+    categories: slot_type(slot_date, nr)
+    reach: reach
+    price: price
+  }
+
+
+# 
+# tvAuction.services
+#
 module = angular.module 'tvAuction.services' , []
 
-module.factory 'Slot', ->
-  class Slot
-    @$inject: ['$http','$q','$log']
-    constructor: (@$http, @$q, $log) ->
-      $log.log 'initializing Slot'
-    get: (id) ->
-      {
-        id: id
-        length: 120
-        price: 1.0
-      }
+module.factory 'UuidManager' , ['$log', ($log) ->
+  uuid = {v4: `function(a,b){for(b=a='';a++<36;b+=a*51&52?(a^15?8^Math.random()*(a^20?16:4):4).toString(16):'-');return b}`} # https://gist.github.com/1308368
+  return uuid
+]
 
+module.factory 'SessionManager', ['$http', '$q', '$log', ($http, $q, $log) ->
+  _cache = {}
+  return {
+    get: (key) ->
+      _cache[key]
+    set: (key, obj) ->
+      _cache[key] = obj
+  }
+]
 
 module.factory 'AuctionManager', ['$http', '$q', '$log', ($http, $q, $log) ->
   class Auction
@@ -76,24 +128,49 @@ module.factory 'AuctionManager', ['$http', '$q', '$log', ($http, $q, $log) ->
 ]
 
 
-module.factory 'CampaignManager', ['$http', '$q', '$log', ($http, $q, $log) ->
+module.factory 'CampaignManager', ['AuctionManager', 'UuidManager', '$http', '$q', '$log', (AuctionManager, uuid, $http, $q, $log) ->
   class Campaign
     constructor: (@id) ->
     minBudget: ->
-      1000.00
+      slot_min_avg = 1
+      @advert.duration*slot_min_avg*@target.quantity
     suggestedBudget: ->
-      2000.00
-    setSuggestedBudget: ->
-      @budget = @suggestedBudget()
+      slot_sug_avg = 2
+      @advert.duration*slot_sug_avg*@target.quantity
+    buildSlots: (auction_slots) ->
+      self = @
+      @slots[..] = _.map auction_slots, (auction_slot) ->
+          id: auction_slot.id
+          date: auction_slot.date
+          active: true
+          forced: false
+          categories: auction_slot.categories
+          target: if self.target.type=='reach' then auction_slot.reach else 1
+    applyTimeRestrictions: ->
+      restrictions = if parseInt(@restrictions.timeframe.active,10) then @restrictions.timeframe.entries else false
+      for slot in @slots
+        daytime = [slot.date.getHours(),slot.date.getDay()-1]
+        slot.active = slot.forced or restrictions == false or ! _.find restrictions, (restriction) ->
+          restriction[0] == daytime[0] and restriction[1] == daytime[1]
+    applyCategoryRestrictions: ->
+      restrictions = if parseInt(@restrictions.auction.active,10)==2 then @restrictions.auction.categories else false
+      # TODO fix this and think about multiple restriction criteria
+
+
   Campaign.prototype.__proto__ = mockCampaign
 
   $log.log 'initializing CampaignManager'
   _cache = {}
   return {
     get: (id) ->
-      if id not of _cache
-        _cache[id] = new Campaign(id)
       return _cache[id]
+    create: (auction_id) ->
+      auction = AuctionManager.get auction_id
+      campaign = new Campaign(uuid.v4())
+      campaign.buildSlots auction.slots
+      campaign.applyTimeRestrictions()
+      _cache[campaign.id] = campaign
+      return campaign
   }
 ]
 
