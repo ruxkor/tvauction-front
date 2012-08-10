@@ -40,9 +40,7 @@ module.directive 'campaigncalendar', ->
 module.directive 'timerestrictions', ['$parse', ($parse) ->
   directive =
     require: 'ngModel'
-    restrict: 'A'
     replace: true
-    transclude: true
     link: (scope, elm, attr, ctrl) ->
       ngModel = $parse attr.ngModel
 
@@ -173,4 +171,245 @@ module.directive 'timerestrictions', ['$parse', ($parse) ->
         .on('click', clearselection)
 
   return directive
+]
+
+module.directive 'targettweaks', ['$parse', ($parse) ->
+  directive =
+    require: 'ngModel'
+    replace: true
+    link: (scope, elm, attr, ctrl) ->
+      ngModel = $parse attr.ngModel
+      slots = ngModel scope
+
+      margin = {top: 10, right: 10, bottom: 100, left: 50}
+      margin2 = {top: 280, right: 10, bottom: 20, left: 50}
+      width = elm.width() - margin.left - margin.right
+      height = elm.height() - margin.top - margin.bottom
+      height2 = elm.height() - margin2.top - margin2.bottom
+
+      formatDate = d3.time.format '%b %Y'
+
+      x = d3.time.scale()
+        .range([0, width])
+
+      x2 = d3.time.scale()
+        .range([0, width])
+
+      y = d3.scale.linear()
+        .range([height, 0])
+
+      y2 = d3.scale.linear()
+        .range([height2, 0])
+
+      xAxis = d3.svg.axis()
+        .scale(x)
+        .orient('bottom')
+      xAxis2 = d3.svg.axis()
+        .scale(x2)
+        .orient('bottom')
+      yAxis = d3.svg.axis()
+        .scale(y)
+        .orient('left')
+
+      area = d3.svg.area()
+        .x( (d) -> x(d.date) )
+        .y0(height)
+        .y1( (d) -> y(d.target) )
+        .interpolate('monotone')
+
+      area2 = d3.svg.area()
+        .x( (d) -> x2(d.date) )
+        .y0(height2)
+        .y1( (d) -> y2(d.target) )
+        .interpolate('monotone')
+
+      svg = d3.selectAll(elm)
+        .append('svg')
+        .attr('with', width + margin.left + margin.right)
+        .attr('height', height + margin.top + margin.bottom)
+
+      svg
+        .append('defs')
+        .append('clipPath')
+          .attr('id', 'clip')
+        .append('rect')
+          .attr('width', width)
+          .attr('height', height)
+
+      focus = svg.append('g')
+        .attr('transform', "translate(#{margin.left},#{margin.top})")
+
+      context = svg.append('g')
+        .attr('class', 'context')
+        .attr('transform', "translate(#{margin2.left},#{margin2.top})")
+
+      onBrushStart = ->
+        bars.each( -> $(this).popover('hide') )
+
+      onBrush = ->
+        x.domain(if brush.empty() then x2.domain() else brush.extent())
+        focus.select('.x.axis').call(xAxis)
+        
+        # determine width of 15 minute bar
+        barWidth = parseInt(x(+x.domain()[0]+15*60*1000), 10)
+
+        focusArea.attr('d', area)
+        bars
+          .attr('x', (d) -> x(d.date) )
+          .attr('width', (d) -> barWidth)
+
+        if barWidth < 8
+          focusArea.attr('opacity', 1)
+          bars.attr('opacity', 0).attr('width',0)
+        else if barWidth < 16
+          bars.attr('opacity', 0.5)
+          focusArea.attr('opacity', 0.5)
+        else if barWidth < 32
+          bars.attr('opacity', 0.75)
+          focusArea.attr('opacity', 0.25)
+        else
+          bars.attr('opacity', 1)
+          focusArea.attr('opacity', 0)
+        
+      onBrushEnd = ->
+        return
+        focusArea.transition().duration(100).attr('opacity',0)
+        bars.transition()
+          .duration(100)
+          .attr('opacity', 1)
+
+      brush = d3.svg.brush()
+        .x(x2)
+        .on('brushstart', onBrushStart)
+        .on('brush', onBrush)
+        .on('brushend', onBrushEnd)
+
+      x.domain(d3.extent(d.date for d in slots))
+      y.domain([0, d3.max(d.target for d in slots)])
+      x2.domain(x.domain())
+      y2.domain(y.domain())
+
+      focusArea = focus.append('path')
+        .data([slots])
+        .attr('clip-path', 'url(#clip)')
+        .attr('d', area)
+
+      focus.append('g')
+        .attr('class', 'x axis')
+        .attr('transform', "translate(0,#{height})")
+        .call(xAxis)
+
+      focus.append('g')
+        .attr('class', 'y axis')
+        .call(yAxis)
+
+      context.append('path')
+        .data([slots])
+        .attr('d', area2)
+
+      context.append('g')
+        .attr('class','x brush')
+        .call(brush)
+        .selectAll('rect')
+        .attr('y', -6)
+        .attr('height',height2 + 7)
+
+      d3.selectAll(elm)
+        .append('div')
+        .attr('class','row')
+        .append('div')
+        .attr('class','span9')
+        .attr('style','text-align: right;')
+        .append('a')
+        .attr('class','info')
+        .text('Reset')
+        .on('click', ->
+          brush.clear()
+          onBrush()
+          svg.call(brush)
+        )
+
+      bars = focus
+        .append('g')
+        .attr('clip-path', 'url(#clip)')
+        .selectAll('rect.slot')
+        .data(slots)
+
+      bars
+        .enter()
+        .append('rect')
+        .attr('class', 'slot')
+        .classed('active', (d) -> d.active)
+        .classed('forced', (d) -> d.forced)
+        .attr('x', (d) -> x(d.date) )
+        .attr('y', (d) -> y(d.target))
+        .attr('width', 0)
+        .attr('height', (d) -> y(y.domain()[0]) - y(d.target))
+        .attr('opacity', 0)
+        
+
+      bars.each( (d) ->
+        genCont = ->
+          console.info arguments
+          return 'some <br />text'
+
+        $(this).popover
+          placement: 'top'
+          trigger: 'manual'
+          title: "Slot #{d.id}"
+          content: genCont
+      )
+
+      bars.on('click', (d) ->
+        $(this).popover('toggle')
+      )
+
+        
+
+      ###
+      chart = graph
+        .append('g')
+        .attr('class','chart')
+        .attr('height', elm.height()-50)
+
+      y = d3.scale.linear()
+        .domain([0,1.2*d3.max(slots, (s) -> s.target)])
+        .range([0,chart.attr('height')])
+
+      bar_width = 45
+      x = d3.scale.linear()
+        .domain([0,slots.length])
+        .range([0,(1.2*bar_width)*slots.length])
+
+      bars = chart
+        .selectAll('rect')
+        .data(slots)
+        .enter()
+        .append('rect')
+        .attr('class','slot')
+        .attr('x', (d,i) -> x(i))
+        .attr('y', (d) -> chart.attr('height') - y(d.target))
+        .attr('width', bar_width)
+        .attr('height', (d) -> y(d.target))
+        .classed('active', (d) -> d.active)
+        .classed('forced', (d) -> d.forced)
+
+      xAxis = d3.svg.axis()
+        .scale(x)
+        .orient("bottom")
+        .ticks(slots.length/2)
+        .tickSubdivide(1)
+        .tickPadding(8)
+
+      yAxis = d3.svg.axis()
+        .scale(y)
+        .orient("left")
+        .tickPadding(8)
+
+      graph.append("g")
+        .attr("class", "axis axisx")
+        .attr("transform", "translate(0,#{elm.height()-40})")
+        .call(xAxis)
+      ###
+      
 ]
