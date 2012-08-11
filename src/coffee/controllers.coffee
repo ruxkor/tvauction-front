@@ -49,7 +49,6 @@ CampaignCreateTargetTweak = ($scope, $location, SessionManager, CampaignManager,
   auction = $scope.auction = AuctionManager.get 99
   campaign = $scope.campaign = CampaignManager.create auction.id
   SessionManager.set 'campaign_id', campaign.id
-  window.myScope = $scope
 
   #campaign_id = SessionManager.get 'campaign_id'
   #if not campaign_id

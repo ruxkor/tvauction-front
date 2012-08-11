@@ -4,3 +4,8 @@ h2
   span.info General Settings
 
 .targettweaks(targettweaks,ng-model="campaign.slots")
+
+div
+  | bla
+  | {{campaign.slots[0]}}
+input(type="text",ng-model="campaign.slots[0].target")

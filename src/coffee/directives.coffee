@@ -23,7 +23,6 @@ module.directive 'campaigncalendar', ->
   directive =
     restrict: 'C'
     replace: true
-    transclude: true
     link: (scope, elm, attr, ctr) ->
       days = d3.time.days scope.auction.from, scope.auction.to
       calendar = []
@@ -114,7 +113,7 @@ module.directive 'timerestrictions', ['$parse', ($parse) ->
         .text(String)
 
       # add selection brush
-      window.brush = brush = d3.svg.brush().x(x).y(y)
+      brush = d3.svg.brush().x(x).y(y)
 
       brushstart = ->
       brushmove = ->
@@ -173,33 +172,40 @@ module.directive 'timerestrictions', ['$parse', ($parse) ->
   return directive
 ]
 
-module.directive 'targettweaks', ['$parse', ($parse) ->
+module.directive 'slotpopup', ['$parse', '$compile', ($parse, $compile) ->
   directive =
     require: 'ngModel'
     replace: true
+    template: "<div></div>"
     link: (scope, elm, attr, ctrl) ->
       ngModel = $parse attr.ngModel
-      slots = ngModel scope
+      slot = ngModel scope
+      console.info slot
 
+      ta = $compile("<input type=\"text\" ng-model=\"#{attr.ngModel}.target\" />")(scope)
+      elm.append ta
+      scope.$apply()
+      #elm.html("<input type='\"text\" ng-model=\"#{attr.ngModel}.target\" />")
+
+
+  return directive
+]
+
+module.directive 'targettweaks', ['$parse', '$compile', ($parse, $compile) ->
+  directive =
+    require: 'ngModel'
+    replace: true
+    compile: (tElm, tAttr, transclude) ->
       margin = {top: 10, right: 10, bottom: 100, left: 50}
       margin2 = {top: 280, right: 10, bottom: 20, left: 50}
-      width = elm.width() - margin.left - margin.right
-      height = elm.height() - margin.top - margin.bottom
-      height2 = elm.height() - margin2.top - margin2.bottom
+      width = tElm.width() - margin.left - margin.right
+      height = tElm.height() - margin.top - margin.bottom
+      height2 = tElm.height() - margin2.top - margin2.bottom
 
-      formatDate = d3.time.format '%b %Y'
-
-      x = d3.time.scale()
-        .range([0, width])
-
-      x2 = d3.time.scale()
-        .range([0, width])
-
-      y = d3.scale.linear()
-        .range([height, 0])
-
-      y2 = d3.scale.linear()
-        .range([height2, 0])
+      x = d3.time.scale().range([0, width])
+      x2 = d3.time.scale().range([0, width])
+      y = d3.scale.linear().range([height, 0])
+      y2 = d3.scale.linear().range([height2, 0])
 
       xAxis = d3.svg.axis()
         .scale(x)
@@ -223,7 +229,8 @@ module.directive 'targettweaks', ['$parse', ($parse) ->
         .y1( (d) -> y2(d.target) )
         .interpolate('monotone')
 
-      svg = d3.selectAll(elm)
+
+      svg = d3.selectAll(tElm)
         .append('svg')
         .attr('with', width + margin.left + margin.right)
         .attr('height', height + margin.top + margin.bottom)
@@ -243,78 +250,76 @@ module.directive 'targettweaks', ['$parse', ($parse) ->
         .attr('class', 'context')
         .attr('transform', "translate(#{margin2.left},#{margin2.top})")
 
+      focusArea = focus.append('path')
+        .attr('clip-path', 'url(#clip)')
+
+      contextArea = context
+        .append('path')
+
+      bars = null
+
+      barClipPath = focus
+        .append('g')
+        .attr('clip-path', 'url(#clip)')
+
+      drawBars = (slots) ->
+        bars = barClipPath
+          .selectAll('rect.slot')
+          .data(slots)
+        bars
+          .enter()
+          .append('rect')
+          .attr('class', 'slot')
+          .classed('active', (d) -> d.active)
+          .classed('forced', (d) -> d.forced)
+          .attr('x', (d) -> x(d.date) )
+          .attr('y', (d) -> y(d.target))
+          .attr('width', 0)
+          .attr('height', (d) -> y(y.domain()[0]) - y(d.target))
+        bars
+          .transition()
+          .duration(200)
+          .attr('y', (d) -> y(d.target))
+          .attr('height', (d) -> y(y.domain()[0]) - y(d.target))
+        bars
+          .exit()
+          .remove()
+
+
+      barOpacity = d3.scale.linear().domain([30,5])
+
       onBrushStart = ->
         bars.each( -> $(this).popover('hide') )
 
       onBrush = ->
         x.domain(if brush.empty() then x2.domain() else brush.extent())
         focus.select('.x.axis').call(xAxis)
-        
         # determine width of 15 minute bar
         barWidth = parseInt(x(+x.domain()[0]+15*60*1000), 10)
+        barWidth = 0 if barWidth < 8
 
-        focusArea.attr('d', area)
+        focusArea
+          .attr('d', area)
+          .attr('opacity', Math.min(1,Math.max(0,barOpacity(barWidth))))
         bars
           .attr('x', (d) -> x(d.date) )
           .attr('width', (d) -> barWidth)
-
-        if barWidth < 8
-          focusArea.attr('opacity', 1)
-          bars.attr('opacity', 0).attr('width',0)
-        else if barWidth < 16
-          bars.attr('opacity', 0.5)
-          focusArea.attr('opacity', 0.5)
-        else if barWidth < 32
-          bars.attr('opacity', 0.75)
-          focusArea.attr('opacity', 0.25)
-        else
-          bars.attr('opacity', 1)
-          focusArea.attr('opacity', 0)
-        
-      onBrushEnd = ->
-        return
-        focusArea.transition().duration(100).attr('opacity',0)
-        bars.transition()
-          .duration(100)
-          .attr('opacity', 1)
+          .attr('opacity', Math.min(1,Math.max(0,1-barOpacity(barWidth))))
 
       brush = d3.svg.brush()
         .x(x2)
         .on('brushstart', onBrushStart)
         .on('brush', onBrush)
-        .on('brushend', onBrushEnd)
-
-      x.domain(d3.extent(d.date for d in slots))
-      y.domain([0, d3.max(d.target for d in slots)])
-      x2.domain(x.domain())
-      y2.domain(y.domain())
-
-      focusArea = focus.append('path')
-        .data([slots])
-        .attr('clip-path', 'url(#clip)')
-        .attr('d', area)
 
       focus.append('g')
-        .attr('class', 'x axis')
+        .attr('class', 'x axis x_axis')
         .attr('transform', "translate(0,#{height})")
-        .call(xAxis)
-
       focus.append('g')
-        .attr('class', 'y axis')
-        .call(yAxis)
-
-      context.append('path')
-        .data([slots])
-        .attr('d', area2)
-
+        .attr('class', 'y axis y_axis')
       context.append('g')
-        .attr('class','x brush')
-        .call(brush)
-        .selectAll('rect')
-        .attr('y', -6)
-        .attr('height',height2 + 7)
+        .attr('class','x brush x_brush')
 
-      d3.selectAll(elm)
+      d3.selectAll(tElm)
         .append('div')
         .attr('class','row')
         .append('div')
@@ -329,87 +334,62 @@ module.directive 'targettweaks', ['$parse', ($parse) ->
           svg.call(brush)
         )
 
-      bars = focus
-        .append('g')
-        .attr('clip-path', 'url(#clip)')
-        .selectAll('rect.slot')
-        .data(slots)
+      updateAxes = (slots) ->
+        x.domain(d3.extent(d.date for d in slots))
+        y.domain([0, d3.max(d.target for d in slots)])
+        x2.domain(x.domain())
+        y2.domain(y.domain())
 
-      bars
-        .enter()
-        .append('rect')
-        .attr('class', 'slot')
-        .classed('active', (d) -> d.active)
-        .classed('forced', (d) -> d.forced)
-        .attr('x', (d) -> x(d.date) )
-        .attr('y', (d) -> y(d.target))
-        .attr('width', 0)
-        .attr('height', (d) -> y(y.domain()[0]) - y(d.target))
-        .attr('opacity', 0)
-        
+      return (scope, elm, attr, ctrl) ->
+        ngModel = $parse attr.ngModel
+        slots = ngModel scope
+        window.myNgM = ngModel
+        window.myScope = scope
 
-      bars.each( (d) ->
-        genCont = ->
-          console.info arguments
-          return 'some <br />text'
+        barWatch = (d, pos) ->
+          #return $compile("<div class=\"slotpopup\" slotpopup ng-model=\"#{tAttr.ngModel}[#{pos}]\" />")(scope)
+          el = $(this)
+          el.popover
+            placement: 'top'
+            trigger: 'manual'
+            title: "Slot #{d.id}"
+            content: "ui"
+          el.click ->
+            el.popover 'toggle'
 
-        $(this).popover
-          placement: 'top'
-          trigger: 'manual'
-          title: "Slot #{d.id}"
-          content: genCont
-      )
 
-      bars.on('click', (d) ->
-        $(this).popover('toggle')
-      )
+        refreshGraph = ->
+          # update all axes' domains and re-scale axes
+          updateAxes(slots)
+          focus.select('g.x_axis').call(xAxis)
+          focus.select('g.y_axis').call(yAxis)
 
-        
+          focusArea
+            .data([slots])
+            .attr('d', area)
 
-      ###
-      chart = graph
-        .append('g')
-        .attr('class','chart')
-        .attr('height', elm.height()-50)
+          contextArea
+            .data([slots])
+            .attr('d', area2)
 
-      y = d3.scale.linear()
-        .domain([0,1.2*d3.max(slots, (s) -> s.target)])
-        .range([0,chart.attr('height')])
+          drawBars(slots)
+          bars.each barWatch
 
-      bar_width = 45
-      x = d3.scale.linear()
-        .domain([0,slots.length])
-        .range([0,(1.2*bar_width)*slots.length])
+          context.select('g.x_brush')
+            .call(brush)
+            .selectAll('rect')
+            .attr('y', -6)
+            .attr('height',height2 + 7)
 
-      bars = chart
-        .selectAll('rect')
-        .data(slots)
-        .enter()
-        .append('rect')
-        .attr('class','slot')
-        .attr('x', (d,i) -> x(i))
-        .attr('y', (d) -> chart.attr('height') - y(d.target))
-        .attr('width', bar_width)
-        .attr('height', (d) -> y(d.target))
-        .classed('active', (d) -> d.active)
-        .classed('forced', (d) -> d.forced)
+        scope.$watch ngModel, (newValue, oldValue) ->
+          # update the slots var
+          slots = newValue
+          refreshGraph()
 
-      xAxis = d3.svg.axis()
-        .scale(x)
-        .orient("bottom")
-        .ticks(slots.length/2)
-        .tickSubdivide(1)
-        .tickPadding(8)
+        scope.$watch 'campaign.slots[0].target', ->
+          console.info 'yo'
+          refreshGraph()
 
-      yAxis = d3.svg.axis()
-        .scale(y)
-        .orient("left")
-        .tickPadding(8)
 
-      graph.append("g")
-        .attr("class", "axis axisx")
-        .attr("transform", "translate(0,#{elm.height()-40})")
-        .call(xAxis)
-      ###
-      
+  return directive
 ]
