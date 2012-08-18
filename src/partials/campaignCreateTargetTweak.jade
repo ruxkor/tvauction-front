@@ -1,11 +1,12 @@
 h1 Create Campaign - Target
 h2
-  | General
-  span.info General Settings
+  | Target values
+  span.info Drag the slider in the lower area and change the value by clicking on the bars.
 
 .targettweaks(targettweaks,ng-model="campaign.slots")
 
-div
-  | bla
-  | {{campaign.slots[0]}}
-input(type="text",ng-model="campaign.slots[0].target")
+.row
+  .span7
+    | bla
+  .span1(style="text-align:right;")
+    a(href="#/campaign/create") back

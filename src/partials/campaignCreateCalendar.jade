@@ -1,9 +1,5 @@
-.row
-  .span9
-    .timerestrictions(timerestrictions, ng-model="campaign.restrictions.timeframe.entries")
-.row
-  .span9
-    a(href="#/campaign/create") back
+h1 Create Campaign - Details
 h2
-  | Campaign {{campaign.name}}
-
+  | Calendar
+  span.info You can assign indiviudal slots here
+.campaigncalendar(campaigncalendar,ng-model='campaign.slots')

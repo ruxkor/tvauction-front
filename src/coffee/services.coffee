@@ -7,14 +7,14 @@ mockCampaign =
   budget: 100
   target:
     type: 'reach'
-    quantity: 300
+    quantity: 303
   restrictions:
     timeframe:
       active: 1
       entries: [
-        [0,0]
-        [0,1]
-        [1,5]
+        [1,0]
+        [1,1]
+        [2,5]
       ]
     auction:
       active: 1
@@ -140,12 +140,11 @@ module.factory 'CampaignManager', ['AuctionManager', 'UuidManager', '$http', '$q
     buildSlots: (auction_slots) ->
       self = @
       @slots[..] = _.map auction_slots, (auction_slot) ->
-          id: auction_slot.id
-          date: auction_slot.date
-          active: true
-          forced: false
-          categories: auction_slot.categories
-          target: if self.target.type=='reach' then auction_slot.reach else 1
+          _.extend
+            active: true
+            forced: false
+            target: if self.target.type=='reach' then auction_slot.reach else 1
+          , auction_slot
     applyTimeRestrictions: ->
       restrictions = if parseInt(@restrictions.timeframe.active,10) then @restrictions.timeframe.entries else false
       for slot in @slots

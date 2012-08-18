@@ -19,18 +19,6 @@ module.directive 'campaignminbudget', ->
         return value
   return directive
 
-module.directive 'campaigncalendar', ->
-  directive =
-    restrict: 'C'
-    replace: true
-    link: (scope, elm, attr, ctr) ->
-      days = d3.time.days scope.auction.from, scope.auction.to
-      calendar = []
-      i = 0
-      while i < days.length-1
-        calendar.push [days[i], d3.time.hours days[i], days[i+1]]
-        i++
-
 # time restrictions directive
 # 
 # this directive is used to whow a calendar-like view
@@ -38,7 +26,6 @@ module.directive 'campaigncalendar', ->
 # the daily and hourly restrictions
 module.directive 'timerestrictions', ['$parse', ($parse) ->
   directive =
-    require: 'ngModel'
     replace: true
     link: (scope, elm, attr, ctrl) ->
       ngModel = $parse attr.ngModel
@@ -174,18 +161,21 @@ module.directive 'timerestrictions', ['$parse', ($parse) ->
 
 module.directive 'slotpopup', ['$parse', '$compile', ($parse, $compile) ->
   directive =
-    require: 'ngModel'
     replace: true
-    template: "<div></div>"
+    templateUrl: 'partials/slotPopup.html'
+    scope:
+      slot: '=slotModel'
     link: (scope, elm, attr, ctrl) ->
-      ngModel = $parse attr.ngModel
-      slot = ngModel scope
-      console.info slot
+      if scope.slot.id == 0
+        button = angular.element $('button',elm)
+        window.myButton = button
+      scope.update = ->
+        console.info scope.slot
+      scope.toggleForceSlot = ->
+        scope.slot.forced = !scope.slot.forced
+        console.info 'force', scope.slot.forced
 
-      ta = $compile("<input type=\"text\" ng-model=\"#{attr.ngModel}.target\" />")(scope)
-      elm.append ta
-      scope.$apply()
-      #elm.html("<input type='\"text\" ng-model=\"#{attr.ngModel}.target\" />")
+
 
 
   return directive
@@ -193,7 +183,6 @@ module.directive 'slotpopup', ['$parse', '$compile', ($parse, $compile) ->
 
 module.directive 'targettweaks', ['$parse', '$compile', ($parse, $compile) ->
   directive =
-    require: 'ngModel'
     replace: true
     compile: (tElm, tAttr, transclude) ->
       margin = {top: 10, right: 10, bottom: 100, left: 50}
@@ -232,7 +221,7 @@ module.directive 'targettweaks', ['$parse', '$compile', ($parse, $compile) ->
 
       svg = d3.selectAll(tElm)
         .append('svg')
-        .attr('with', width + margin.left + margin.right)
+        .attr('width', width + margin.left + margin.right)
         .attr('height', height + margin.top + margin.bottom)
 
       svg
@@ -250,11 +239,13 @@ module.directive 'targettweaks', ['$parse', '$compile', ($parse, $compile) ->
         .attr('class', 'context')
         .attr('transform', "translate(#{margin2.left},#{margin2.top})")
 
-      focusArea = focus.append('path')
-        .attr('clip-path', 'url(#clip)')
+      #focusArea = focus.append('path')
+        #.attr('clip-path', 'url(#clip)')
 
       contextArea = context
         .append('path')
+
+      barOpacity = d3.scale.linear().domain([30,5])
 
       bars = null
 
@@ -274,11 +265,11 @@ module.directive 'targettweaks', ['$parse', '$compile', ($parse, $compile) ->
           .classed('forced', (d) -> d.forced)
           .attr('x', (d) -> x(d.date) )
           .attr('y', (d) -> y(d.target))
-          .attr('width', 0)
+          .attr('width', 2)
           .attr('height', (d) -> y(y.domain()[0]) - y(d.target))
         bars
           .transition()
-          .duration(200)
+          .duration(400)
           .attr('y', (d) -> y(d.target))
           .attr('height', (d) -> y(y.domain()[0]) - y(d.target))
         bars
@@ -286,25 +277,30 @@ module.directive 'targettweaks', ['$parse', '$compile', ($parse, $compile) ->
           .remove()
 
 
-      barOpacity = d3.scale.linear().domain([30,5])
+      # keep track of the opened bars
+      openedBars = []
+
+      barHide = (d, pos, el) ->
+        el.popover('hide') if el.data('popover')
+        openedBars = []
 
       onBrushStart = ->
-        bars.each( -> $(this).popover('hide') )
+        bars.each (d,pos) -> barHide(d,pos, $(this))
 
       onBrush = ->
         x.domain(if brush.empty() then x2.domain() else brush.extent())
         focus.select('.x.axis').call(xAxis)
         # determine width of 15 minute bar
         barWidth = parseInt(x(+x.domain()[0]+15*60*1000), 10)
-        barWidth = 0 if barWidth < 8
+        barWidth = 1 if barWidth < 1
 
-        focusArea
-          .attr('d', area)
-          .attr('opacity', Math.min(1,Math.max(0,barOpacity(barWidth))))
+        #focusArea
+          #.attr('d', area)
+          #.attr('opacity', Math.min(1,Math.max(0,barOpacity(barWidth))))
         bars
           .attr('x', (d) -> x(d.date) )
           .attr('width', (d) -> barWidth)
-          .attr('opacity', Math.min(1,Math.max(0,1-barOpacity(barWidth))))
+          #.attr('opacity', Math.min(1,Math.max(0,1-barOpacity(barWidth))))
 
       brush = d3.svg.brush()
         .x(x2)
@@ -319,77 +315,294 @@ module.directive 'targettweaks', ['$parse', '$compile', ($parse, $compile) ->
       context.append('g')
         .attr('class','x brush x_brush')
 
-      d3.selectAll(tElm)
-        .append('div')
-        .attr('class','row')
-        .append('div')
-        .attr('class','span9')
-        .attr('style','text-align: right;')
-        .append('a')
-        .attr('class','info')
-        .text('Reset')
-        .on('click', ->
-          brush.clear()
-          onBrush()
-          svg.call(brush)
-        )
-
-      updateAxes = (slots) ->
-        x.domain(d3.extent(d.date for d in slots))
-        y.domain([0, d3.max(d.target for d in slots)])
-        x2.domain(x.domain())
-        y2.domain(y.domain())
+      context.select('g.x_brush')
+        .call(brush)
+        .selectAll('rect')
+        .attr('y', -6)
+        .attr('height',height2 + 7)
 
       return (scope, elm, attr, ctrl) ->
+
+        # the slots value gets assigned on the $watch event below
         ngModel = $parse attr.ngModel
-        slots = ngModel scope
-        window.myNgM = ngModel
-        window.myScope = scope
+        slots = null
 
-        barWatch = (d, pos) ->
-          #return $compile("<div class=\"slotpopup\" slotpopup ng-model=\"#{tAttr.ngModel}[#{pos}]\" />")(scope)
-          el = $(this)
+        barWatch = (d, pos, el) ->
+          popdata = el.data('popover')
+          if popdata
+            popdata.options.animation = false
+            el.popover('hide')
+            el.removeData 'popover'
+            el.off()
           el.popover
-            placement: 'top'
+            placement: 'right'
             trigger: 'manual'
-            title: "Slot #{d.id}"
-            content: "ui"
+            title: "Slot # #{d.id}"
+            content: $compile("<div slotpopup slot-model=\"#{tAttr.ngModel}[#{pos}]\" />")(scope)
           el.click ->
-            el.popover 'toggle'
+            inOpenedBarsPos = openedBars.indexOf el
+            if inOpenedBarsPos != -1
+              openedBars.splice inOpenedBarsPos, 1
+              el.popover 'hide'
+            else
+              if openedBars.length > 0
+                barToClose = openedBars.pop()
+                barToClose.popover 'hide'
+              openedBars.push el
+              el.popover 'show'
 
-
-        refreshGraph = ->
-          # update all axes' domains and re-scale axes
-          updateAxes(slots)
+        # update all axes' domains and re-scale axes
+        refreshAxes = ->
+          x.domain(d3.extent(d.date for d in slots))
+          y.domain([0, d3.max(d.target for d in slots)])
+          x2.domain(x.domain())
+          y2.domain(y.domain())
           focus.select('g.x_axis').call(xAxis)
           focus.select('g.y_axis').call(yAxis)
 
-          focusArea
-            .data([slots])
-            .attr('d', area)
+        refreshYAxis = ->
+          y.domain([0, d3.max(d.target for d in slots)])
+          y2.domain(y.domain())
+          focus.select('g.y_axis').call(yAxis)
 
+        refreshValues = ->
+          #focusArea
+            #.data([slots])
+            #.attr('d', area)
           contextArea
             .data([slots])
             .attr('d', area2)
-
           drawBars(slots)
-          bars.each barWatch
 
-          context.select('g.x_brush')
-            .call(brush)
-            .selectAll('rect')
-            .attr('y', -6)
-            .attr('height',height2 + 7)
 
         scope.$watch ngModel, (newValue, oldValue) ->
-          # update the slots var
+          firstUpdate = (slots == null)
+          slotsChanged = (newValue.length != oldValue.length)
           slots = newValue
-          refreshGraph()
 
-        scope.$watch 'campaign.slots[0].target', ->
-          console.info 'yo'
-          refreshGraph()
+          if firstUpdate or slotsChanged
+            refreshAxes()
+            brush.clear() if slotsChanged
+          else
+            refreshYAxis()
+
+          refreshValues()
+
+          if firstUpdate or slotsChanged
+            bars.each (d,pos) -> barWatch(d,pos,$(this))
+          else
+            bars.each (d,pos) -> barHide(d,pos,$(this))
+          
+        , true
 
 
   return directive
 ]
+
+module.directive 'campaigncalendar', ['$parse', '$compile', ($parse, $compile) ->
+  directive =
+    replace: true
+    compile: (tElm, tAttr, transclude) ->
+      margin = {top: 10, right: 10, bottom: 20, left: 50}
+
+      width = tElm.width() - margin.left - margin.right
+      height = tElm.height() - margin.top - margin.bottom
+
+
+      x = d3.time.scale()
+        .range([0, width])
+      y = d3.scale.linear()
+        .range([0, height])
+
+      window.myXa = xAxis = d3.svg.axis()
+        .scale(x)
+        .orient('bottom')
+        .ticks(d3.time.days,1)
+
+      window.myYa = yAxis = d3.svg.axis()
+        .scale(y)
+        .orient('left')
+        .ticks(12)
+
+      svg = d3.selectAll(tElm)
+        .append('svg')
+        .attr('width', width + margin.left + margin.right)
+        .attr('height', height + margin.top + margin.bottom)
+      svg
+        .append('defs')
+        .append('clipPath')
+          .attr('id', 'clip')
+        .append('rect')
+          .attr('width', width)
+          .attr('height', height)
+
+      graph = svg.append('g')
+        .attr('class', 'graph')
+        .attr('transform', "translate(#{margin.left},#{margin.top})")
+
+      bars = null
+      openedBars = []
+
+      barHide = (d, pos, el) ->
+        el.popover('hide') if el.data('popover')
+        openedBars = []
+
+
+      x0 = null
+      y0 = null
+
+      successfulTranslate = [0, 0]
+
+      zoomer = d3.behavior.zoom()
+        .scaleExtent([1,2])
+
+      onZoom = ->
+        ev = d3.event # translate[x,y], scale
+
+        bars.each (d,pos) -> barHide(d,pos,$(this))
+
+        if ev.scale == 1.0
+          x.domain x0.domain()
+          y.domain y0.domain()
+          successfulTranslate = [0, 0]
+        else
+          xTrans = x0.range().map( (xVal) -> (xVal-ev.translate[0]) / ev.scale ).map(x0.invert)
+          yTrans = y0.range().map( (yVal) -> (yVal-ev.translate[1]) / ev.scale ).map(y0.invert)
+          xTransOk = xTrans[0] >= x.domain()[0] and xTrans[1] <= x.domain()[1]
+          yTransOk = yTrans[0] >= y.domain()[0] and yTrans[1] <= y.domain()[1]
+          console.info xTransOk, yTransOk
+          if xTransOk
+            x.domain xTrans
+            successfulTranslate[0] = ev.translate[0]
+          if yTransOk
+            y.domain yTrans
+            successfulTranslate[1] = ev.translate[1]
+
+          zoomer.translate successfulTranslate
+
+      resetZoom = ->
+        zoomer.translate [0,0]
+        zoomer.scale 1
+
+      zoomer.on('zoom', onZoom)
+
+      graph.append('g')
+        .attr('class','x axis')
+        .attr('transform', "translate(0,#{height})")
+
+      graph.append('g')
+        .attr('class', 'y axis')
+
+      # if the previous timezone is bigger, then they overlap. example: -60 > -120 
+      # for GMT+0100 and GMT+0200
+      #return previousSlot.date.getTimezoneOffset() > d.date.getTimezoneOffset()
+      overlapCheck =
+        next: (d,pos) ->
+          other = slots[pos+1]
+          return false unless other
+          return other.date.getTimezoneOffset() < d.date.getTimezoneOffset()
+        previous: (d,pos) ->
+          other = slots[pos-1]
+          return false unless other
+          return other.date.getTimezoneOffset() > d.date.getTimezoneOffset()
+
+      overlapCheck =
+        next: (d,pos) -> pos == 9
+        previous: (d,pos) -> pos == 10
+
+      barClipPath = graph
+        .append('g')
+        .attr('clip-path', 'url(#clip)')
+        .call(zoomer)
+      
+      drawBars = (slots) ->
+        bars = barClipPath
+          .selectAll('rect.slot')
+          .data(slots)
+        bars
+          .enter()
+          .append('rect')
+          .attr('class','slot')
+          .classed('active', (d) -> d.active)
+          .classed('forced', (d) -> d.forced)
+        bars
+          .attr('width', (d, pos) ->
+            res = x(d3.time.day.ceil(new Date(+d.date+1000))) - x(d3.time.day.floor(d.date))
+            res *= 0.5 if overlapCheck.next(d,pos) or overlapCheck.previous(d,pos)
+            console.info(d) if res <= 0
+            res - 4)
+          .attr('height', (d) ->
+            hours = d.date.getHours() + d.date.getMinutes()/60
+            res = y(hours+1) - y(hours)
+            res - 4)
+          .attr('transform', (d, pos) ->
+            hours = d.date.getHours() + d.date.getMinutes()/60
+            barY = y(hours)
+            barX = x(d3.time.day.floor(d.date))
+            if overlapCheck.previous(d,pos)
+              barX = (barX + x(d3.time.day.ceil(d.date))) * 0.5
+            return "translate(#{2+barX}, #{2+barY})")
+        bars
+          .exit()
+          .remove()
+
+      return (scope, elm, attr, ctrl) ->
+
+        ngModel = $parse attr.ngModel
+        slots = null
+
+        barWatch = (d, pos, el) ->
+          popdata = el.data('popover')
+          if popdata
+            popdata.options.animation = false
+            el.popover('hide')
+            el.removeData 'popover'
+            el.off()
+          el.popover
+            placement: 'top'
+            trigger: 'manual'
+            title: "Slot # #{d.id}"
+            content: $compile("<div slotpopup slot-model=\"#{attr.ngModel}[#{pos}]\" />")(scope)
+          el.click ->
+            inOpenedBarsPos = openedBars.indexOf el
+            if inOpenedBarsPos != -1
+              openedBars.splice inOpenedBarsPos, 1
+              el.popover 'hide'
+            else
+              if openedBars.length > 0
+                barToClose = openedBars.pop()
+                barToClose.popover 'hide'
+              openedBars.push el
+              el.popover 'show'
+
+        refreshAxes = ->
+          limits =
+            x: [d3.min(d3.time.day.floor(d.date) for d in slots), d3.max(d3.time.day.ceil(d.date) for d in slots)]
+            y: [0,24]
+          x.domain(limits.x[..])
+          y.domain(limits.y[..])
+          x0 = x.copy()
+          y0 = y.copy()
+          
+          graph.select('g.x.axis').call(xAxis)
+          graph.select('g.y.axis').call(yAxis)
+
+        refreshValues = ->
+          drawBars(slots)
+
+        scope.$watch ngModel, (newValue, oldValue) ->
+          firstUpdate = (slots == null)
+          slotsChanged = (newValue.length != oldValue.length)
+          slots = newValue
+
+          if firstUpdate or slotsChanged
+            refreshAxes()
+            resetZoom() if slotsChanged
+
+          refreshValues()
+
+          if firstUpdate or slotsChanged
+            bars.each (d,pos) -> barWatch(d,pos,$(this))
+
+]
+

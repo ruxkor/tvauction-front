@@ -37,15 +37,18 @@ CampaignCreateCtrl = ($scope, SessionManager, CampaignManager, AuctionManager) -
 
     
 CampaignCreateCalendarCtrl = ($scope, $location, SessionManager, CampaignManager, AuctionManager) ->
-  campaign_id = SessionManager.get 'campaign_id'
-  if not campaign_id
-    $location.path('/campaign/create')
-    return
+  auction = $scope.auction = AuctionManager.get 99
+  campaign = $scope.campaign = CampaignManager.create auction.id
+  SessionManager.set 'campaign_id', campaign.id
+  #campaign_id = SessionManager.get 'campaign_id'
+  #if not campaign_id
+    #$location.path('/campaign/create')
+    #return
 
-  campaign = $scope.campaign = CampaignManager.get campaign_id 
-  auction = $scope.auction = AuctionManager.get campaign.auction_id
+  #campaign = $scope.campaign = CampaignManager.get campaign_id 
+  #auction = $scope.auction = AuctionManager.get campaign.auction_id
 
-CampaignCreateTargetTweak = ($scope, $location, SessionManager, CampaignManager, AuctionManager) ->
+CampaignCreateTargetTweakCtrl = ($scope, $location, SessionManager, CampaignManager, AuctionManager) ->
   auction = $scope.auction = AuctionManager.get 99
   campaign = $scope.campaign = CampaignManager.create auction.id
   SessionManager.set 'campaign_id', campaign.id
@@ -64,4 +67,4 @@ CampaignCreateTargetTweak = ($scope, $location, SessionManager, CampaignManager,
 
 CampaignCreateCtrl.$inject = ['$scope', 'SessionManager', 'CampaignManager','AuctionManager']
 CampaignCreateCalendarCtrl.$inject = ['$scope', '$location', 'SessionManager', 'CampaignManager','AuctionManager']
-CampaignCreateTargetTweak.$inject = ['$scope', '$location', 'SessionManager', 'CampaignManager','AuctionManager']
+CampaignCreateTargetTweakCtrl.$inject = ['$scope', '$location', 'SessionManager', 'CampaignManager','AuctionManager']

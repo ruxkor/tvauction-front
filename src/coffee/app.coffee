@@ -11,6 +11,6 @@ angular
 			controller: CampaignCreateCalendarCtrl
 		$routeProvider.when '/campaign/create/targetTweak',
 			templateUrl: 'partials/campaignCreateTargetTweak.html'
-			controller: CampaignCreateTargetTweak
+			controller: CampaignCreateTargetTweakCtrl
 		$routeProvider.otherwise {redirectTo: '/campaign/create'}
   ]
