@@ -470,21 +470,17 @@ module.directive 'campaigncalendar', ['$parse', '$compile', ($parse, $compile) -
           yTrans = y0.range().map( (yVal) -> (yVal-ev.translate[1]) / ev.scale ).map(y0.invert)
           xTransOk = xTrans[0] >= x.domain()[0] and xTrans[1] <= x.domain()[1]
           yTransOk = yTrans[0] >= y.domain()[0] and yTrans[1] <= y.domain()[1]
-          console.info xTransOk, yTransOk
           if xTransOk
             x.domain xTrans
             successfulTranslate[0] = ev.translate[0]
           if yTransOk
             y.domain yTrans
             successfulTranslate[1] = ev.translate[1]
-
-          zoomer.translate successfulTranslate
+        zoomer.translate successfulTranslate
 
       resetZoom = ->
         zoomer.translate [0,0]
         zoomer.scale 1
-
-      zoomer.on('zoom', onZoom)
 
       graph.append('g')
         .attr('class','x axis')
@@ -535,13 +531,15 @@ module.directive 'campaigncalendar', ['$parse', '$compile', ($parse, $compile) -
             hours = d.date.getHours() + d.date.getMinutes()/60
             res = y(hours+1) - y(hours)
             res - 4)
-          .attr('transform', (d, pos) ->
+          .attr('y', (d) ->
             hours = d.date.getHours() + d.date.getMinutes()/60
             barY = y(hours)
+            2+barY)
+          .attr('x', (d, pos) ->
             barX = x(d3.time.day.floor(d.date))
             if overlapCheck.previous(d,pos)
               barX = (barX + x(d3.time.day.ceil(d.date))) * 0.5
-            return "translate(#{2+barX}, #{2+barY})")
+            2+barX)
         bars
           .exit()
           .remove()
@@ -587,8 +585,15 @@ module.directive 'campaigncalendar', ['$parse', '$compile', ($parse, $compile) -
           graph.select('g.x.axis').call(xAxis)
           graph.select('g.y.axis').call(yAxis)
 
+          zoomer.on 'zoom', ->
+            onZoom()
+            graph.select('g.x.axis').call(xAxis)
+            graph.select('g.y.axis').call(yAxis)
+            drawBars slots
+
+
         refreshValues = ->
-          drawBars(slots)
+          drawBars slots
 
         scope.$watch ngModel, (newValue, oldValue) ->
           firstUpdate = (slots == null)
