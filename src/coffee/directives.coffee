@@ -169,14 +169,8 @@ module.directive 'slotpopup', ['$parse', '$compile', ($parse, $compile) ->
       if scope.slot.id == 0
         button = angular.element $('button',elm)
         window.myButton = button
-      scope.update = ->
-        console.info scope.slot
       scope.toggleForceSlot = ->
         scope.slot.forced = !scope.slot.forced
-        console.info 'force', scope.slot.forced
-
-
-
 
   return directive
 ]
@@ -261,13 +255,11 @@ module.directive 'targettweaks', ['$parse', '$compile', ($parse, $compile) ->
           .enter()
           .append('rect')
           .attr('class', 'slot')
+          .attr('x', (d) -> x(d.date) )
+          .attr('width', 2)
+        bars
           .classed('active', (d) -> d.active)
           .classed('forced', (d) -> d.forced)
-          .attr('x', (d) -> x(d.date) )
-          .attr('y', (d) -> y(d.target))
-          .attr('width', 2)
-          .attr('height', (d) -> y(y.domain()[0]) - y(d.target))
-        bars
           .transition()
           .duration(400)
           .attr('y', (d) -> y(d.target))
@@ -292,7 +284,7 @@ module.directive 'targettweaks', ['$parse', '$compile', ($parse, $compile) ->
         focus.select('.x.axis').call(xAxis)
         # determine width of 15 minute bar
         barWidth = parseInt(x(+x.domain()[0]+15*60*1000), 10)
-        barWidth = 1 if barWidth < 1
+        barWidth = 2 if barWidth < 2
 
         #focusArea
           #.attr('d', area)
@@ -388,11 +380,9 @@ module.directive 'targettweaks', ['$parse', '$compile', ($parse, $compile) ->
 
           refreshValues()
 
+          bars.each (d,pos) -> barHide(d,pos,$(this))
           if firstUpdate or slotsChanged
             bars.each (d,pos) -> barWatch(d,pos,$(this))
-          else
-            bars.each (d,pos) -> barHide(d,pos,$(this))
-          
         , true
 
 
@@ -466,10 +456,12 @@ module.directive 'campaigncalendar', ['$parse', '$compile', ($parse, $compile) -
           y.domain y0.domain()
           successfulTranslate = [0, 0]
         else
+          xLimits = x0.domain()
+          yLimits = y0.domain()
           xTrans = x0.range().map( (xVal) -> (xVal-ev.translate[0]) / ev.scale ).map(x0.invert)
           yTrans = y0.range().map( (yVal) -> (yVal-ev.translate[1]) / ev.scale ).map(y0.invert)
-          xTransOk = xTrans[0] >= x.domain()[0] and xTrans[1] <= x.domain()[1]
-          yTransOk = yTrans[0] >= y.domain()[0] and yTrans[1] <= y.domain()[1]
+          xTransOk = xTrans[0] >= xLimits[0] and xTrans[1] <= xLimits[1]
+          yTransOk = yTrans[0] >= yLimits[0] and yTrans[1] <= yLimits[1]
           if xTransOk
             x.domain xTrans
             successfulTranslate[0] = ev.translate[0]
@@ -519,9 +511,9 @@ module.directive 'campaigncalendar', ['$parse', '$compile', ($parse, $compile) -
           .enter()
           .append('rect')
           .attr('class','slot')
+        bars
           .classed('active', (d) -> d.active)
           .classed('forced', (d) -> d.forced)
-        bars
           .attr('width', (d, pos) ->
             res = x(d3.time.day.ceil(new Date(+d.date+1000))) - x(d3.time.day.floor(d.date))
             res *= 0.5 if overlapCheck.next(d,pos) or overlapCheck.previous(d,pos)
@@ -606,8 +598,10 @@ module.directive 'campaigncalendar', ['$parse', '$compile', ($parse, $compile) -
 
           refreshValues()
 
+          bars.each (d,pos) -> barHide(d,pos,$(this))
           if firstUpdate or slotsChanged
             bars.each (d,pos) -> barWatch(d,pos,$(this))
+        , true
 
 ]
 

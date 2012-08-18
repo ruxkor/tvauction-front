@@ -1,4 +1,4 @@
-# 'use strict'
+'use strict'
 
 mockCampaign =
   id: 1
