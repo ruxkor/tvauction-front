@@ -34,7 +34,7 @@ module.directive 'timerestrictions', ['$parse', ($parse) ->
 
       # build data arrays
       calendar = []
-      for day in [0...7]
+      for day in [1,2,3,4,5,6,0]
         for hour in [0...24]
           calendar_entry = [hour,day]
           in_entry = _.any entries, (entry) ->
@@ -71,7 +71,7 @@ module.directive 'timerestrictions', ['$parse', ($parse) ->
         .attr('y', (d,i,j) -> y(d[1]+1) )
         .attr('width', x.rangeBand())
         .attr('height', y.rangeBand())
-        .classed('active', (d) -> d[2])
+        .classed('restricted', (d) -> d[2])
 
       # create horizontal header text
       graph
@@ -118,21 +118,22 @@ module.directive 'timerestrictions', ['$parse', ($parse) ->
 
       brushend = ->
         selected = fields.filter('.inselection')
-        active =  selected.filter('.active')
-        inactive =  selected.filter(':not(.active)')
-        active.classed('active', false)
-        inactive.classed('active', true)
+        restricted =  selected.filter('.restricted')
+        inactive =  selected.filter(':not(.restricted)')
+        restricted.classed('restricted', false)
+        inactive.classed('restricted', true)
         selected.classed('inselection', false)
         brush.clear()
         chart.call(brush)
         
-        active_entries = _.map fields.filter('.active').data(), (d) ->
+        restrictedEntries = _.map fields.filter('.restricted').data(), (d) ->
           d[0...2]
-        ngModel.assign scope, active_entries
+        console.info JSON.stringify(restrictedEntries)
+        ngModel.assign scope, restrictedEntries
         scope.$digest()
 
       clearselection = ->
-        fields.classed('active', false)
+        fields.classed('restricted', false)
         ngModel.assign scope, []
         scope.$digest()
 
@@ -518,20 +519,20 @@ module.directive 'campaigncalendar', ['$parse', '$compile', ($parse, $compile) -
             res = x(d3.time.day.ceil(new Date(+d.date+1000))) - x(d3.time.day.floor(d.date))
             res *= 0.5 if overlapCheck.next(d,pos) or overlapCheck.previous(d,pos)
             console.info(d) if res <= 0
-            res - 4)
+            res - 2)
           .attr('height', (d) ->
             hours = d.date.getHours() + d.date.getMinutes()/60
             res = y(hours+1) - y(hours)
-            res - 4)
+            res - 2)
           .attr('y', (d) ->
             hours = d.date.getHours() + d.date.getMinutes()/60
             barY = y(hours)
-            2+barY)
+            1+barY)
           .attr('x', (d, pos) ->
             barX = x(d3.time.day.floor(d.date))
             if overlapCheck.previous(d,pos)
               barX = (barX + x(d3.time.day.ceil(d.date))) * 0.5
-            2+barX)
+            1+barX)
         bars
           .exit()
           .remove()

@@ -1,7 +1,7 @@
 @info: grey;
-@field-selected: #afb;
-@field-notselected: silver;
-@field-forced: green;
+@field-selected: #090;
+@field-notselected: #ccc;
+@field-forced: #040;
 
 
 h1 {
@@ -77,11 +77,8 @@ input[type=number]::-webkit-outer-spin-button {
 			stroke: white;
 			fill: @field-selected;
 		}
-		rect.selecting {
-			opacity: 0.8;
-		}
-		rect.active {
-			opacity: 0.5;
+		rect.field.restricted {
+			fill: @field-notselected;
 		}
 	}
 }
@@ -128,13 +125,10 @@ input[type=number]::-webkit-outer-spin-button {
 		shape-rendering: crispEdges;
 	}
 	rect.slot {
-		stroke: grey;
 		fill: @field-notselected;
-		fill-opacity: 0.5;
 	}
 
 	rect.slot.active {
-		fill-opacity: 1;
 		fill: @field-selected;
 	}
 	rect.slot.forced {

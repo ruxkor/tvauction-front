@@ -18,10 +18,10 @@ CampaignCreateCtrl = ($scope, SessionManager, CampaignManager, AuctionManager) -
   $scope.campaign = campaign
 
   $scope.getActiveSlots = ->
-    _.filter campaign.slots, (slot) -> slot.active
+    _.filter campaign.slots, (slot) -> slot.active or slot.forced
 
-  $scope.$watch 'campaign.restrictions.timeframe', (val, old_val) ->
-    campaign.applyTimeRestrictions()
+  $scope.$watch 'campaign.restrictions', (newValue, oldValue) ->
+    campaign.applyRestrictions()
   , true
 
 
@@ -34,7 +34,7 @@ CampaignCreateCalendarCtrl = ($scope, $location, SessionManager, CampaignManager
     $location.path('/campaign/create')
     return
 
-  campaign = $scope.campaign = CampaignManager.get campaign_id 
+  campaign = $scope.campaign = CampaignManager.get campaign_id
   auction = $scope.auction = AuctionManager.get campaign.auction_id
 
 CampaignCreateTargetTweakCtrl = ($scope, $location, SessionManager, CampaignManager, AuctionManager) ->

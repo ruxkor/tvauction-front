@@ -145,15 +145,22 @@ module.factory 'CampaignManager', ['AuctionManager', 'UuidManager', '$http', '$q
             forced: false
             target: if self.target.type=='reach' then auction_slot.reach else 1
           , auction_slot
-    applyTimeRestrictions: ->
+    applyTimeRestrictions: (chain) ->
       restrictions = if parseInt(@restrictions.timeframe.active,10) then @restrictions.timeframe.entries else false
       for slot in @slots
-        daytime = [slot.date.getHours(),slot.date.getDay()-1]
-        slot.active = slot.forced or restrictions == false or ! _.find restrictions, (restriction) ->
-          restriction[0] == daytime[0] and restriction[1] == daytime[1]
-    applyCategoryRestrictions: ->
+        continue if chain and not slot.active
+        slot.active = restrictions == false or ! _.find restrictions, (restriction) ->
+          restriction[0] == slot.date.getHours() and restriction[1] == slot.date.getDay()
+    applyCategoryRestrictions: (chain) ->
       restrictions = if parseInt(@restrictions.auction.active,10)==2 then @restrictions.auction.categories else false
+      for slot in @slots
+        continue if chain and not slot.active
+        slot.active = restrictions == false or _.find restrictions, (restriction) ->
+          restriction in slot.categories
       # TODO fix this and think about multiple restriction criteria
+    applyRestrictions: ->
+      @applyTimeRestrictions false
+      @applyCategoryRestrictions true
 
 
   Campaign.prototype.__proto__ = mockCampaign
