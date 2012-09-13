@@ -47,7 +47,7 @@ mockAuction =
   from: new Date("2012-01-02 00:00:00")
   to: new Date("2012-01-16 00:00:00")
   categories: [
-    'kids'
+    'reality'
     'comedy'
     'action'
     'cartoon'
@@ -72,10 +72,17 @@ slot_reach = (date) ->
 slot_type = (date, slot_nr) ->
   pr1 = 13
   pr2 = 17
-  categories = _.uniq([
+  categoriesRaw = [
     mockAuction.categories[slot_nr % pr1 % mockAuction.categories.length]
     mockAuction.categories[slot_nr % pr2 % mockAuction.categories.length]
-  ])
+  ]
+  categories = _.uniq(_.filter categoriesRaw, (cat) ->
+    if cat == 'adult' and (date.getHours() < 21 and date.getHours() > 6)
+      false
+    else
+      true
+  )
+
 
 
 mockAuction.slots = _.map slot_dates, (slot_date, nr) ->

@@ -1,0 +1,27 @@
+form
+  table.table.table-condensed
+    tr
+      th Attributes
+      th Categories
+    tr
+      td: ul
+        li Active: {{slot.forced || slot.active}}
+        li Forced: 
+          input(type="checkbox", ng-model="input.forced")
+      td: ul
+        li(ng-repeat="category in slot.categories") {{category}}
+    tr
+      th Price
+      th &nbsp;
+    tr
+      td(colspan="2") {{slot.price*30 | number:2}} &euro; / 30s
+    tr
+      th Target
+      th Reach
+    tr
+      td(style="padding-top:10px;") 
+        input.input.input-mini(type="number", ng-model="input.target")
+      td(style="padding-top:10px;") 
+        input.input.input-mini(type="text", disabled="disabled", value="{{slot.reach}}")
+  button.button(ng-click="saveInput()") Save
+  button.button(ng-click="closePopup()") Close

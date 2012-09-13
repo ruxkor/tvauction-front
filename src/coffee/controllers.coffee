@@ -29,6 +29,7 @@ CampaignCreateCalendarCtrl = ($scope, $location, SessionManager, CampaignManager
   #auction = $scope.auction = AuctionManager.get 99
   #campaign = $scope.campaign = CampaignManager.create auction.id
   #SessionManager.set 'campaign_id', campaign.id
+  
   campaign_id = SessionManager.get 'campaign_id'
   if not campaign_id
     $location.path('/campaign/create')
@@ -51,13 +52,15 @@ CampaignCreateTargetTweakCtrl = ($scope, $location, SessionManager, CampaignMana
   auction = $scope.auction = AuctionManager.get campaign.auction_id
   
 
+MyTestCtrl = ($scope, $location, SessionManager, CampaignManager, AuctionManager) ->
+  auction = $scope.auction = AuctionManager.get 99
+  campaign = $scope.campaign = CampaignManager.create auction.id
+  SessionManager.set 'campaign_id', campaign.id
+  window.mySc = $scope
+  $scope.slot = campaign.slots[0]
+
 SlotPopupCtrl = ($scope, $location, SessionManager, CampaignManager) ->
-  campaign_id = SessionManager.get 'campaign_id'
-  if not campaign_id
-    $location.path('/campaign/create')
-    return
-  campaign = $scope.campaign = CampaignManager.get campaign_id 
-  console.info campaign_id
+  console.info arguments
 
 
 
