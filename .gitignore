@@ -11,3 +11,7 @@ public/css/*.css
 public/js/*.js
 public/*.html
 public/partials/*.html
+
+# compiled js files
+test/e2e/*.js
+test/unit/*.js

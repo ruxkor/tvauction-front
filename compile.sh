@@ -7,6 +7,8 @@ while [ 1 ]; do
 	)
 	RES_COFFEE=$(
 		coffee -cb -o public/js public_src/coffee/*.coffee 2>&1
+		coffee -cb -o test/unit test/unit/*.coffee 2>&1
+		coffee -cb -o test/e2e test/e2e/*.coffee 2>&1
 	)
 	RES_LESS=$(
 		lessc public_src/less/app.less > public/css/app.css
@@ -14,7 +16,7 @@ while [ 1 ]; do
 	[ -n "$RES_JADE" ] && notify-send "jade error" && echo "$RES_JADE"
 	[ -n "$RES_COFFEE" ] && notify-send "coffee error" && echo "$RES_COFFEE"
 	echo $RES
-	inotifywait -r -e modify -q public_src
+	inotifywait -r -e modify -q public_src test
 	echo -e "----\n\n"
 	done
 
