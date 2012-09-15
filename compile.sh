@@ -6,9 +6,9 @@ while [ 1 ]; do
 		jade -P -O public/partials public_src/partials/*.jade >/dev/null;
 	)
 	RES_COFFEE=$(
-		coffee -cb -o public/js public_src/coffee/*.coffee 2>&1
-		coffee -cb -o test/unit test/unit/*.coffee 2>&1
-		coffee -cb -o test/e2e test/e2e/*.coffee 2>&1
+		coffee -c -o public/js public_src/coffee/*.coffee 2>&1
+		coffee -c -o test/unit test/unit/*.coffee 2>&1
+		coffee -c -o test/e2e test/e2e/*.coffee 2>&1
 	)
 	RES_LESS=$(
 		lessc public_src/less/app.less > public/css/app.css

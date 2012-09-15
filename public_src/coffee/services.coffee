@@ -109,6 +109,17 @@ module.factory 'UuidManager' , ['$log', ($log) ->
   return uuid
 ]
 
+module.factory 'UserManager', ['$http','$q','$log', ($http, $q, $log) ->
+  return {
+    # logs the user in, i.e. returns it's user id and a session token
+    login: (email, password) ->
+      return $http.post 'user/login', {email:email, password: password}
+    # checks if the user is still logged in, returning his user id
+    check: ->
+      return $http.post 'user/check'
+  }
+
+]
 module.factory 'SessionManager', ['$http', '$q', '$log', ($http, $q, $log) ->
   _cache = {}
   return {

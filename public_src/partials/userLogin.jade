@@ -1,0 +1,19 @@
+
+h2 
+  | Login
+  span.info Please insert your email and password
+
+.alert(ng-show="credentialsInvalid")
+  strong Invalid Credentials
+  Your email/password combination is invalid.
+
+form.form-horizontal(ng-submit="login()")
+  .control-group
+    label.control-label email
+    .controls
+      input(type="email", required, placeholder="email", ng-model="user.email")
+  .control-group
+    label.control-label password
+    .controls
+      input(type="password", required, placeholder="password", ng-model="user.password")
+  button.btn Log in
