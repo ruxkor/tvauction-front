@@ -22,7 +22,7 @@ window.UserLoginCtrl = ($scope, $location, SessionManager, UserManager) ->
     d.success (res) ->
       user_id = ~~res
       if user_id > 0
-        SessionManager.set 'user_id', res.user_id
+        SessionManager.set 'user_id', user_id
         $location.path '/main'
       else
         $scope.credentialsInvalid = true

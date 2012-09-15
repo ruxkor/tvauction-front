@@ -8,7 +8,7 @@ urlparser = require('url')
 
 checkSession = (req, res, next) ->
   url = urlparser.parse req.url, true
-  if url.pathname == '/' or url.pathname.match(/^\/(js|lib|css|partials)\//) or url.pathname.match(/^\/user\/(login|logout|check)$/)
+  if url.pathname.match(/^\/[^\/]*$/) or url.pathname.match(/^\/(js|lib|css|partials|test)\//) or url.pathname.match(/^\/user\/(login|logout|check)$/)
     next()
     return
   else if not req.session.auth
