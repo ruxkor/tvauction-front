@@ -1,0 +1,19 @@
+{
+  "author": "Andor Goetzendorff <goetzend@cs.tum.edu>",
+  "name": "mt-proto3-front",
+  "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "tracker@anata-it.de:mt-proto3-front.git"
+  },
+  "dependencies": {
+    "express": "*",
+  },
+  "devDependencies": {
+    "nodemon": "*"
+  },
+  "optionalDependencies": {},
+  "engines": {
+    "node": "*"
+  }
+}
