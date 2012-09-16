@@ -270,9 +270,6 @@ module.directive 'targettweaks', ['$parse', '$compile', ($parse, $compile) ->
         .attr('height',height2 + 7)
 
       return (scope, elm, attr, ctrl) ->
-        window.mySc = scope
-        window.myComp = $compile
-
         # the slots value gets assigned on the $watch event below
         ngModel = $parse attr.ngModel
         slots = null
@@ -299,9 +296,9 @@ module.directive 'targettweaks', ['$parse', '$compile', ($parse, $compile) ->
 
 
         scope.$watch ngModel, (newValue, oldValue) ->
-          firstUpdate = (slots == null)
           return unless newValue
-          slotsChanged = (newValue.length != oldValue.length)
+          firstUpdate = (slots == null)
+          slotsChanged = not oldValue or (newValue.length != oldValue.length)
           slots = newValue
 
           if firstUpdate or slotsChanged
@@ -492,8 +489,9 @@ module.directive 'campaigncalendar', ['$parse', '$compile', ($parse, $compile) -
           drawBars slots, scope
 
         scope.$watch ngModel, (newValue, oldValue) ->
+          return unless newValue
           firstUpdate = (slots == null)
-          slotsChanged = (newValue.length != oldValue.length)
+          slotsChanged = not oldValue or (newValue.length != oldValue.length)
           slots = newValue
 
           if firstUpdate or slotsChanged
@@ -503,5 +501,93 @@ module.directive 'campaigncalendar', ['$parse', '$compile', ($parse, $compile) -
           refreshValues()
         , true
 
+]
+
+module.directive 'auctionreach', ['$parse','$compile', ($parse, $compile) ->
+  directive =
+    replace: true
+    scope:
+      auctionStart: '='
+      auctionEnd: '='
+      slots: '='
+      reach: '='
+    compile: (tElm, tAttr, transclude) ->
+      margin = {top: 10, right: 10, bottom: 20, left: 50}
+
+      width = tElm.width() - margin.left - margin.right
+      height = tElm.height() - margin.top - margin.bottom
+
+      x = d3.time.scale().range([0, width])
+      y = d3.scale.linear().range([0, height])
+
+      xAxis = d3.svg.axis().scale(x).orient('bottom')
+      yAxis = d3.svg.axis().scale(y).orient('left')
+
+      area = d3.svg.line()
+        .x( (d) -> x(d.date) )
+        .y( (d) -> y(d.reach) )
+        .interpolate('monotone')
+
+      svg = d3.selectAll(tElm)
+        .append('svg')
+        .attr('width', width + margin.left + margin.right)
+        .attr('height', height + margin.top + margin.bottom)
+
+      context = svg.append('g')
+        .attr('transform', "translate(#{margin.left},#{margin.top})")
+
+      contextArea = context
+        .append('path')
+
+      context.append('g')
+        .attr('class','x axis x_axis')
+        .attr('transform', "translate(0,#{height})")
+      context.append('g')
+        .attr('class','y axis y_axis')
+
+      return (scope, elm, attr, ctrl) ->
+
+        # we augment the slots with a reach attribute
+        # this attribute is then used to draw the y values
+        slots = null
+        reaches = null
+        auction_start = null
+        auction_end = null
+
+        refreshReaches = ->
+          if reaches.length != slots.length
+            throw new Error('reaches and slots do not have the same length')
+
+          for slot, i in slots
+            slot.reach = reaches[i]
+
+          x.domain([auction_start,auction_end])
+          y.domain([d3.max(d.reach for d in slots),0])
+          context.select('g.x_axis').call(xAxis)
+          context.select('g.y_axis').call(yAxis)
+
+          contextArea
+            .data([slots])
+            .transition()
+            .attr('d', area)
+
+        checkForRefresh = ->
+          console.info slots, reaches
+          refreshReaches() if slots and reaches and auction_start and auction_end
+
+        scope.$watch 'auctionStart', (newValue, oldValue) ->
+          auction_start = new Date(newValue)
+          checkForRefresh()
+        scope.$watch 'auctionEnd', (newValue, oldValue) ->
+          auction_end = new Date(newValue)
+          checkForRefresh()
+        scope.$watch 'slots', (newValue, oldValue) ->
+          slots = newValue
+          checkForRefresh()
+        scope.$watch 'reach', (newValue, oldValue) ->
+          reaches = newValue
+          checkForRefresh()
+
+  return directive
 ]
 

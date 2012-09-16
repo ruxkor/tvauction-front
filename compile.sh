@@ -7,8 +7,8 @@ while [ 1 ]; do
 	)
 	RES_COFFEE=$(
 		coffee -c -o public/js public_src/coffee/*.coffee 2>&1
-		coffee -c -o test/unit test/unit/*.coffee 2>&1
-		coffee -c -o test/e2e test/e2e/*.coffee 2>&1
+		coffee -c -o test_frontend/unit test_frontend/unit/*.coffee 2>&1
+		coffee -c -o test_frontend/e2e test_frontend/e2e/*.coffee 2>&1
 	)
 	RES_LESS=$(
 		lessc public_src/less/app.less > public/css/app.css

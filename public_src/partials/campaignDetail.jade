@@ -38,7 +38,7 @@ h2
             span.add-on Impr.
   .span2.info
     ul.nopoints
-      li: a(href="#/campaign/create/targetTweak") details / change target
+      li: a(href="#/campaign/targetTweak") details / change target
 
 
 // advert
@@ -88,9 +88,9 @@ h2
       tbody
         tr
           td # slots
-          td {{campaign.slots.length}}
+          td {{campaign.content.slots.length}}
           td {{getActiveSlots().length}}
-          td: a(href="#/campaign/create/calendar") details
+          td: a(href="#/campaign/calendar") details
         tr
           td: em more..
           td &nbsp;

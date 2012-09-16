@@ -31,19 +31,22 @@ angular
     $routeProvider.when '/campaign',
       templateUrl: 'partials/campaign.html'
       controller: CampaignCtrl
-    $routeProvider.when '/campaign/new',
+    $routeProvider.when '/campaign/resume',
       templateUrl: 'partials/campaignDetail.html'
       controller: CampaignDetailCtrl
+    $routeProvider.when '/campaign/new/:auction',
+      templateUrl: 'partials/campaignDetail.html'
+      controller: CampaignDetailCtrl
+    $routeProvider.when '/campaign/calendar',
+      templateUrl: 'partials/campaignDetailCalendar.html'
+      controller: CampaignDetailCalendarCtrl
+    $routeProvider.when '/campaign/targetTweak',
+      templateUrl: 'partials/campaignDetailTargetTweak.html'
+      controller: CampaignDetailTargetTweakCtrl
     $routeProvider.when '/campaign/:campaign',
       templateUrl: 'partials/campaignDetail.html'
       controller: CampaignDetailCtrl
 
-    $routeProvider.when '/campaign/create/calendar',
-      templateUrl: 'partials/campaignDetailCalendar.html'
-      controller: CampaignDetailCalendarCtrl
-    $routeProvider.when '/campaign/create/targetTweak',
-      templateUrl: 'partials/campaignDetailTargetTweak.html'
-      controller: CampaignDetailTargetTweakCtrl
 
     $routeProvider.otherwise {redirectTo: '/'}
 

@@ -22,6 +22,8 @@ if config.help
   process.exit()
 
 checkSession = (req, res, next) ->
+  next()
+  return
   url = urlparser.parse req.url, true
   if url.pathname.match(/^\/[^\/]*$/) or url.pathname.match(/^\/(js|lib|css|partials|test)\//) or url.pathname.match(/^\/user\/(login|logout|check)$/)
     next()
@@ -30,6 +32,17 @@ checkSession = (req, res, next) ->
     res.writeHead 403
     res.end 'not authenticated'
     return
+
+checkIntValue = (valName) ->
+  (req, res, next, id) ->
+    id = ~~id
+    if not id
+      res.writeHead 404
+      res.end "invalid value for #{valName}"
+      return
+    else
+      req.params[valName] = id
+      next()
 
 app = express()
 app.configure ->
@@ -61,6 +74,13 @@ DELETE  /thing/:thing       ->  destroy
 ###
 
 # routes
+db = require('./app/database')(config)
+routes = require('./app/routes')(config, db)
+
+# guarantee integer values and throw an error if they are not set
+for valName in ['campaign','auction']
+  app.param valName, checkIntValue(valName)
+
 app.post '/user/login', routes.user.login
 app.get '/user/logout', routes.user.logout
 app.get '/user/check', routes.user.check

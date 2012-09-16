@@ -27,7 +27,8 @@ mockCampaign =
       'owls'
       'animals'
     ]
-  slots: []
+  content:
+    slots: []
   #slots: [
       #id: 10
       #active: true
@@ -122,7 +123,7 @@ module.factory 'UserManager', ['$http','$q','$log', ($http, $q, $log) ->
   }
 
 ]
-module.factory 'SessionManager', ['$http', '$q', '$log', ($http, $q, $log) ->
+module.factory 'CacheManager', ['$http', '$q', '$log', ($http, $q, $log) ->
   _cache = {}
   return {
     get: (key) ->
@@ -140,10 +141,23 @@ module.factory 'AuctionManager', ['$http', '$q', '$log', ($http, $q, $log) ->
   $log.log 'initializing AuctionManager'
   _cache = {}
   return {
+    #get: (id) ->
+      #if id not of _cache
+        #_cache[id] = new Auction(id)
+      #return _cache[id]
+    list: () ->
+      return $http.get '/auction'
     get: (id) ->
-      if id not of _cache
-        _cache[id] = new Auction(id)
-      return _cache[id]
+      d = $q.defer()
+      req = $http.get "/auction/#{id}"
+      req.success (res) ->
+        res.auction.content = JSON.parse res.auction.content
+        for slot in res.auction.content.slots
+          slot.date = new Date(slot.date)
+        _.each res.reaches, (reach) ->
+          reach.content = JSON.parse reach.content
+        d.resolve res
+      return d.promise
   }
 ]
 
@@ -151,6 +165,7 @@ module.factory 'AuctionManager', ['$http', '$q', '$log', ($http, $q, $log) ->
 module.factory 'CampaignManager', ['AuctionManager', 'UuidManager', '$http', '$q', '$log', (AuctionManager, uuid, $http, $q, $log) ->
   class Campaign
     constructor: (@id) ->
+      @content = {slots: []}
     minBudget: ->
       slot_min_avg = 1
       @advert.duration*slot_min_avg*@target.quantity
@@ -158,22 +173,21 @@ module.factory 'CampaignManager', ['AuctionManager', 'UuidManager', '$http', '$q
       slot_sug_avg = 2
       @advert.duration*slot_sug_avg*@target.quantity
     buildSlots: (auction_slots) ->
-      self = @
-      @slots[..] = _.map auction_slots, (auction_slot) ->
+      @content.slots[..] = _.map auction_slots, (auction_slot) ->
           _.extend
             active: true
             forced: false
-            target: if self.target.type=='reach' then auction_slot.reach else 1
+            target: 1
           , auction_slot
     applyTimeRestrictions: (chain) ->
-      restrictions = if parseInt(@restrictions.timeframe.active,10) then @restrictions.timeframe.entries else false
-      for slot in @slots
+      restrictions = if ~~@restrictions.timeframe.active then @restrictions.timeframe.entries else false
+      for slot in @content.slots
         continue if chain and not slot.active
         slot.active = restrictions == false or not _.find restrictions, (restriction) ->
           restriction[0] == slot.date.getHours() and restriction[1] == slot.date.getDay()
     applyCategoryRestrictions: (chain) ->
-      restrictions = if parseInt(@restrictions.auction.active,10)==2 then @restrictions.auction.categories else false
-      for slot in @slots
+      restrictions = if ~~@restrictions.auction.active==2 then @restrictions.auction.categories else false
+      for slot in @content.slots
         continue if chain and not slot.active
         slot.active = restrictions == false or _.find restrictions, (restriction) ->
           restriction in slot.categories
@@ -188,29 +202,34 @@ module.factory 'CampaignManager', ['AuctionManager', 'UuidManager', '$http', '$q
   _cache = {}
   return {
     create: (auction_id) ->
-      auction = AuctionManager.get auction_id
-      campaign = new Campaign(uuid.v4())
-      campaign.buildSlots auction.slots
-      campaign.applyTimeRestrictions()
-      _cache[campaign.id] = campaign
+      campaign = new Campaign()
       return campaign
+
     list: (params) ->
-      return $http.get 'auction', params
-    get: (auction_id) ->
-      return _cache[auction_id]
-      return $http.get "auction/#{auction_id}"
-    save: (auction) ->
-      if not auction.id
-        d = $http.post 'auction', auction
-        d.success (auction_id) ->
-          auction.id = auction_id
-        return d
+      return $http.get 'campaign', params
+
+    get: (campaign_id, use_cache) ->
+      d = $q.defer()
+      if campaign_id and use_cache != false and campaign_id in _cache
+        d.resolve _cache[campaign_id]
+      else
+        req = $http.get "campaign/#{campaign_id}"
+        req.success (res) ->
+          d.resolve res
+      return d.promise
+
+    save: (campaign) ->
+      if not campaign.id
+        d = $q.defer()
+        req = $http.post 'campaign', auction
+        req.success (campaign_id) ->
+          campaign.id = campaign_id
+        return d.promise
       else
         return $http.put "auction/#{auction.id}", auction
 
     delete: (auction_id) ->
       return $http.delete 'auction', auction_id
-
   }
 ]
 
