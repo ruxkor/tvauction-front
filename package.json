@@ -7,10 +7,16 @@
     "url": "tracker@anata-it.de:mt-proto3-front.git"
   },
   "dependencies": {
+    "debug": "0.7",
     "express": "*",
+	"mysql": "*"
   },
   "devDependencies": {
-    "nodemon": "*"
+    "nodemon": "*",
+    "mocha": "1",
+    "chai": "1",
+    "sinon": ">=1.3.4 <2",
+    "sinon-chai": "2"
   },
   "optionalDependencies": {},
   "engines": {
