@@ -13,5 +13,5 @@ public/*.html
 public/partials/*.html
 
 # compiled js files
-test/e2e/*.js
-test/unit/*.js
+test_frontend/e2e/*.js
+test_frontend/unit/*.js
