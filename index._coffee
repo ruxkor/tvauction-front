@@ -1,10 +1,25 @@
 'use strict'
 
-express = require('express')
-routes = require('./routes')
-http = require('http')
-path = require('path')
-urlparser = require('url')
+debug = require('debug')('tvauction')
+http = require 'http'
+fs = require 'fs'
+path = require 'path'
+urlparser = require 'url'
+optimist = require 'optimist'
+mysql = require 'mysql'
+express = require 'express'
+
+configDefault = JSON.parse(fs.readFileSync(__dirname+'/config.json'))
+config = optimist
+  .usage('tvAuction front/middleware\nusage: $0')
+  .alias('h','help').describe('help','you\'re looking at it.')
+  .alias('d','db').describe('db','database connection arguments')
+  .default(configDefault)
+  .argv
+
+if config.help
+  optimist.showHelp()
+  process.exit()
 
 checkSession = (req, res, next) ->
   url = urlparser.parse req.url, true
@@ -34,13 +49,6 @@ app.configure ->
 
 app.configure 'development', ->
   app.use express.errorHandler()
-
-app.param 'user', (req, res, next, id) ->
-  console.info arguments
-  if ~~id == 2
-    next()
-  else
-    next new Error('nono')
 
 ###
 GET     /thing              ->  index

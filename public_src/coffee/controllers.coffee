@@ -51,11 +51,8 @@ window.AuctionCtrl = ($scope, SessionManager, AuctionManager) ->
   d.success (auctions) ->
     $scope.auctions = auctions
 
-window.AuctionViewCtrl = ($scope, SessionManager, AuctionManager) ->
-  auction_id = SessionManager.get 'auction_id'
-  if not auction_id
-    $location.path '/auction'
-    return
+window.AuctionViewCtrl = ($scope, $routeParams, SessionManager, AuctionManager) ->
+  auction_id = $routeParams.auction
 
   d = AuctionManager.get auction_id
   d.success (auction) ->

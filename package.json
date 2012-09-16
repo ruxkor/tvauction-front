@@ -1,22 +1,24 @@
 {
   "author": "Andor Goetzendorff <goetzend@cs.tum.edu>",
   "name": "mt-proto3-front",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "repository": {
     "type": "git",
     "url": "tracker@anata-it.de:mt-proto3-front.git"
   },
   "dependencies": {
-    "debug": "0.7",
-    "express": "*",
-	"mysql": "*"
+      "debug": "0.7"
+    , "express": "*"
+    , "mysql": "*"
+    , "streamline": "*"
+    , "fibers": "*"
   },
   "devDependencies": {
-    "nodemon": "*",
-    "mocha": "1",
-    "chai": "1",
-    "sinon": ">=1.3.4 <2",
-    "sinon-chai": "2"
+      "nodemon": "*"
+    , "mocha": "1"
+    , "chai": "1"
+    , "sinon": ">=1.3.4 <2"
+    , "sinon-chai": "2"
   },
   "optionalDependencies": {},
   "engines": {

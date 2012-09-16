@@ -169,7 +169,7 @@ module.factory 'CampaignManager', ['AuctionManager', 'UuidManager', '$http', '$q
       restrictions = if parseInt(@restrictions.timeframe.active,10) then @restrictions.timeframe.entries else false
       for slot in @slots
         continue if chain and not slot.active
-        slot.active = restrictions == false or ! _.find restrictions, (restriction) ->
+        slot.active = restrictions == false or not _.find restrictions, (restriction) ->
           restriction[0] == slot.date.getHours() and restriction[1] == slot.date.getDay()
     applyCategoryRestrictions: (chain) ->
       restrictions = if parseInt(@restrictions.auction.active,10)==2 then @restrictions.auction.categories else false
@@ -177,7 +177,6 @@ module.factory 'CampaignManager', ['AuctionManager', 'UuidManager', '$http', '$q
         continue if chain and not slot.active
         slot.active = restrictions == false or _.find restrictions, (restriction) ->
           restriction in slot.categories
-      # TODO fix this and think about multiple restriction criteria
     applyRestrictions: ->
       @applyTimeRestrictions false
       @applyCategoryRestrictions true
@@ -188,8 +187,6 @@ module.factory 'CampaignManager', ['AuctionManager', 'UuidManager', '$http', '$q
   $log.log 'initializing CampaignManager'
   _cache = {}
   return {
-    get: (id) ->
-      return _cache[id]
     create: (auction_id) ->
       auction = AuctionManager.get auction_id
       campaign = new Campaign(uuid.v4())
@@ -197,6 +194,23 @@ module.factory 'CampaignManager', ['AuctionManager', 'UuidManager', '$http', '$q
       campaign.applyTimeRestrictions()
       _cache[campaign.id] = campaign
       return campaign
+    list: (params) ->
+      return $http.get 'auction', params
+    get: (auction_id) ->
+      return _cache[auction_id]
+      return $http.get "auction/#{auction_id}"
+    save: (auction) ->
+      if not auction.id
+        d = $http.post 'auction', auction
+        d.success (auction_id) ->
+          auction.id = auction_id
+        return d
+      else
+        return $http.put "auction/#{auction.id}", auction
+
+    delete: (auction_id) ->
+      return $http.delete 'auction', auction_id
+
   }
 ]
 
