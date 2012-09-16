@@ -19,7 +19,7 @@ exports.user =
 
   logout: (req, res) ->
     req.session = null
-    res.end()
+    res.end "0"
 
   check: (req, res) ->
     user_id = req.session.user_id or 0

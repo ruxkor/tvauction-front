@@ -15,14 +15,14 @@ angular
     $routeProvider.when '/user/logout',
       templateUrl: 'partials/userLogout.html'
       controller: UserLogoutCtrl
-    $routeProvider.when '/campaign/create',
-      templateUrl: 'partials/campaignCreate.html'
-      controller: CampaignCreateCtrl
+    $routeProvider.when '/campaign/new',
+      templateUrl: 'partials/campaignDetail.html'
+      controller: CampaignDetailCtrl
     $routeProvider.when '/campaign/create/calendar',
-      templateUrl: 'partials/campaignCreateCalendar.html'
-      controller: CampaignCreateCalendarCtrl
+      templateUrl: 'partials/campaignDetailCalendar.html'
+      controller: CampaignDetailCalendarCtrl
     $routeProvider.when '/campaign/create/targetTweak',
-      templateUrl: 'partials/campaignCreateTargetTweak.html'
-      controller: CampaignCreateTargetTweakCtrl
+      templateUrl: 'partials/campaignDetailTargetTweak.html'
+      controller: CampaignDetailTargetTweakCtrl
     $routeProvider.otherwise {redirectTo: '/'}
   ]

@@ -27,11 +27,39 @@ window.UserLoginCtrl = ($scope, $location, SessionManager, UserManager) ->
       else
         $scope.credentialsInvalid = true
 
-window.UserLogoutCtrl = ($scope, $location, SessionManager) ->
+window.UserLogoutCtrl = ($scope, $location, UserManager) ->
+  $scope.successful = null
+
+  d = UserManager.logout()
+  d.then (res) ->
+    $scope.successful = true
+    setTimeout ->
+      $location.path '/'
+      $scope.$apply()
+    , 3000
+  , (res) ->
+    $scope.successful = false
+
+
+window.AuctionCtrl = ($scope, SessionManager, AuctionManager) ->
   user_id = SessionManager.get 'user_id'
   if not user_id
     $location.path '/user/login'
     return
+
+  d = AuctionManager.list()
+  d.success (auctions) ->
+    $scope.auctions = auctions
+
+window.AuctionViewCtrl = ($scope, SessionManager, AuctionManager) ->
+  auction_id = SessionManager.get 'auction_id'
+  if not auction_id
+    $location.path '/auction'
+    return
+
+  d = AuctionManager.get auction_id
+  d.success (auction) ->
+    $scope.auction = auction
 
 window.CampaignCtrl = ($scope, SessionManager, CampaignManager, AuctionManager) ->
   user_id = SessionManager.get 'user_id'
@@ -41,7 +69,7 @@ window.CampaignCtrl = ($scope, SessionManager, CampaignManager, AuctionManager) 
 
   # campaigns can be opened/created and deleted
 
-window.CampaignCreateCtrl = ($scope, SessionManager, CampaignManager, AuctionManager) ->
+window.CampaignDetailCtrl = ($scope, SessionManager, CampaignManager, AuctionManager) ->
   campaign_id = SessionManager.get 'campaign_id'
   auction_id = SessionManager.get 'auction_id'
 
@@ -66,7 +94,7 @@ window.CampaignCreateCtrl = ($scope, SessionManager, CampaignManager, AuctionMan
   , true
 
 
-window.CampaignCreateCalendarCtrl = ($scope, $location, SessionManager, CampaignManager, AuctionManager) ->
+window.CampaignDetailCalendarCtrl = ($scope, $location, SessionManager, CampaignManager, AuctionManager) ->
   #auction = $scope.auction = AuctionManager.get 99
   #campaign = $scope.campaign = CampaignManager.create auction.id
   #SessionManager.set 'campaign_id', campaign.id
@@ -83,7 +111,7 @@ window.CampaignCreateCalendarCtrl = ($scope, $location, SessionManager, Campaign
   campaign = $scope.campaign = CampaignManager.get campaign_id
   auction = $scope.auction = AuctionManager.get campaign.auction_id
 
-window.CampaignCreateTargetTweakCtrl = ($scope, $location, SessionManager, CampaignManager, AuctionManager) ->
+window.CampaignDetailTargetTweakCtrl = ($scope, $location, SessionManager, CampaignManager, AuctionManager) ->
   #auction = $scope.auction = AuctionManager.get 99
   #campaign = $scope.campaign = CampaignManager.create auction.id
   #SessionManager.set 'campaign_id', campaign.id
@@ -104,6 +132,7 @@ window.CampaignCreateTargetTweakCtrl = ($scope, $location, SessionManager, Campa
 
 
 UserLoginCtrl.$inject = ['$scope', '$location', 'SessionManager', 'UserManager']
-CampaignCreateCtrl.$inject = ['$scope', 'SessionManager', 'CampaignManager','AuctionManager']
-CampaignCreateCalendarCtrl.$inject = ['$scope', '$location', 'SessionManager', 'CampaignManager','AuctionManager']
-CampaignCreateTargetTweakCtrl.$inject = ['$scope', '$location', 'SessionManager', 'CampaignManager','AuctionManager']
+UserLogoutCtrl.$inject = ['$scope', '$location', 'UserManager']
+CampaignDetailCtrl.$inject = ['$scope', 'SessionManager', 'CampaignManager','AuctionManager']
+CampaignDetailCalendarCtrl.$inject = ['$scope', '$location', 'SessionManager', 'CampaignManager','AuctionManager']
+CampaignDetailTargetTweakCtrl.$inject = ['$scope', '$location', 'SessionManager', 'CampaignManager','AuctionManager']

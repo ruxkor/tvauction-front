@@ -10,7 +10,7 @@ head
     .navbar
       .navbar-inner
         .container
-          a.brand(href='#/') TvAuction
+          a.brand(ng-href='#/') TvAuction
           ul.nav
             li.active: a(href='#') Blabla
     .row
@@ -18,19 +18,19 @@ head
       .span3
         ul.nav.nav-list
           li.nav-header Campaigns
-          li: a List Active Campaigns
-          li: a List Finished Campaigns
-          li: a(href='#/campaign/create') Create Campaign
+          li: a(ng-href='#/campaign/list/active') List Active Campaigns
+          li: a(ng-href='#/campaign/list/finished') List Finished Campaigns
+          li: a(ng-href='#/campaign/new') Create Campaign
 
           li.nav-header Auctions
-          li: a List Auctions
+          li: a(ng-href='#/auction/list') List Auctions
 
           li.nav-header Adverts
-          li: a Import Advert
-          li: a Manage Adverts
+          li: a(ng-href='#/advert/create') Import Advert
+          li: a(ng-href='#/advert/list') Manage Adverts
 
           li.nav-header Support
-          li: a Help
+          li: a(ng-href='#/help') Help
       .span9
         div(ng-view)
 

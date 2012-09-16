@@ -115,8 +115,10 @@ module.factory 'UserManager', ['$http','$q','$log', ($http, $q, $log) ->
     login: (email, password) ->
       return $http.post 'user/login', {email:email, password: password}
     # checks if the user is still logged in, returning his user id
+    logout: ->
+      return $http.get 'user/logout'
     check: ->
-      return $http.post 'user/check'
+      return $http.get 'user/check'
   }
 
 ]
