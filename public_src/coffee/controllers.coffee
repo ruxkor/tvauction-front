@@ -51,7 +51,7 @@ window.AuctionCtrl = ($scope, UserManager, AuctionManager) ->
       $location.path '/user/login'
       return
     d = AuctionManager.list()
-    d.success (auctions) ->
+    d.then (auctions) ->
       $scope.auctions = auctions
 
 window.AuctionViewCtrl = ($scope, $routeParams, UserManager, AuctionManager) ->
@@ -61,14 +61,12 @@ window.AuctionViewCtrl = ($scope, $routeParams, UserManager, AuctionManager) ->
       $location.path '/user/login'
       return
 
-    auction_id = $routeParams.auction
+    auction_id = ~~$routeParams.auction
     d = AuctionManager.get auction_id
     d.then (res) ->
       $scope.auction = res.auction
       $scope.reaches = res.reaches
       $scope.reach_active = res.reaches[0]
-    $scope.$watch 'reach_active', (newValue, oldValue) ->
-      console.info newValue,oldValue
 
 window.CampaignCtrl = ($scope, UserManager, CampaignManager, AuctionManager) ->
   d = UserManager.check()
@@ -77,7 +75,7 @@ window.CampaignCtrl = ($scope, UserManager, CampaignManager, AuctionManager) ->
       $location.path '/user/login'
       return
     d = CampaignManager.list()
-    d.success (campaigns) ->
+    d.then (campaigns) ->
       $scope.campaigns = campaigns
 
   # campaigns can be opened/created and deleted
@@ -171,6 +169,15 @@ window.CampaignDetailTargetTweakCtrl = ($scope, $location, UserManager, CacheMan
     if not $scope.campaign
       $location.path('/')
       return
+
+    $scope.reach_active = $scope.reaches[0].content.slot_reaches
+    $scope.$watch 'reach_active', (newValue, oldValue) ->
+      if newValue and newValue != oldValue
+        $scope.campaign.updateReaches newValue.content.slot_reaches
+
+    $scope.confirmReachChange = ->
+      # TODO do something
+
   
 
 

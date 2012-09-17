@@ -572,7 +572,6 @@ module.directive 'auctionreach', ['$parse','$compile', ($parse, $compile) ->
             .attr('d', area)
 
         checkForRefresh = ->
-          console.info slots, reaches
           refreshReaches() if slots and reaches and auction_start and auction_end
 
         scope.$watch 'auctionStart', (newValue, oldValue) ->

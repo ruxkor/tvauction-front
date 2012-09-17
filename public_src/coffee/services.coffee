@@ -146,7 +146,14 @@ module.factory 'AuctionManager', ['$http', '$q', '$log', ($http, $q, $log) ->
         #_cache[id] = new Auction(id)
       #return _cache[id]
     list: () ->
-      return $http.get '/auction'
+      d = $q.defer()
+      req = $http.get '/auction'
+      req.success (res) ->
+        d.resolve res
+      req.error (res, status) ->
+        $log.log status, res
+        d.reject (res)
+      return d.promise
     get: (id) ->
       d = $q.defer()
       req = $http.get "/auction/#{id}"
@@ -157,6 +164,9 @@ module.factory 'AuctionManager', ['$http', '$q', '$log', ($http, $q, $log) ->
         _.each res.reaches, (reach) ->
           reach.content = JSON.parse reach.content
         d.resolve res
+      req.error (res, status, headers, config) ->
+        $log.log status, res
+        d.reject res
       return d.promise
   }
 ]
@@ -179,6 +189,9 @@ module.factory 'CampaignManager', ['AuctionManager', 'UuidManager', '$http', '$q
             forced: false
             target: 1
           , auction_slot
+    updateReaches: (reaches) ->
+      for slot,i in @content.slots
+        slot.target = reaches[i]
     applyTimeRestrictions: (chain) ->
       restrictions = if ~~@restrictions.timeframe.active then @restrictions.timeframe.entries else false
       for slot in @content.slots
@@ -206,7 +219,16 @@ module.factory 'CampaignManager', ['AuctionManager', 'UuidManager', '$http', '$q
       return campaign
 
     list: (params) ->
-      return $http.get 'campaign', params
+      d = $q.defer()
+      req = $http.get 'campaign', params
+      req.success (res) ->
+        campaign = new Campaign()
+        _.extend campaign, res
+        d.resolve campaign
+      req.error (res, status) ->
+        $log.log status, res
+        d.reject res
+      return d.promise
 
     get: (campaign_id, use_cache) ->
       d = $q.defer()
@@ -219,14 +241,18 @@ module.factory 'CampaignManager', ['AuctionManager', 'UuidManager', '$http', '$q
       return d.promise
 
     save: (campaign) ->
+      d = $q.defer()
       if not campaign.id
-        d = $q.defer()
         req = $http.post 'campaign', auction
-        req.success (campaign_id) ->
-          campaign.id = campaign_id
-        return d.promise
       else
-        return $http.put "auction/#{auction.id}", auction
+        req = $http.put "campaign/#{campaign.id}", auction
+      req.success (campaign_id) ->
+        campaign.id = campaign_id
+        req.resolve campaign_id
+      req.error (res, status) ->
+        $log.log status, res
+        d.reject res
+      return d.promise
 
     delete: (auction_id) ->
       return $http.delete 'auction', auction_id
