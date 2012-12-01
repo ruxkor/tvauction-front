@@ -10,8 +10,12 @@
       "debug": "0.7"
     , "express": "*"
     , "mysql": "*"
-    , "streamline": "*"
     , "fibers": "*"
+    , "streamline": "*"
+	, "bcrypt": "*"
+	, "coffee-script": "*"
+	, "jade": "*"
+	, "optimist": "*"
   },
   "devDependencies": {
       "nodemon": "*"
