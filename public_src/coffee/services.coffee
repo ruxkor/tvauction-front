@@ -10,14 +10,10 @@ mockCampaign =
     quantity: 303
   restrictions:
     timeframe:
-      active: 1
-      entries: [
-        [1,0]
-        [1,1]
-        [2,5]
-      ]
+      active: 0
+      entries: []
     auction:
-      active: 1
+      active: 0
       categories: []
   advert:
     name: 'my advert'
@@ -29,19 +25,6 @@ mockCampaign =
     ]
   content:
     slots: []
-  #slots: [
-      #id: 10
-      #active: true
-      #target: 100
-    #,
-      #id: 12
-      #active: true
-      #target: 100
-    #,
-      #id: 15
-      #active: true
-      #target: 100
-  #]
 
 mockAuction =
   id: 1
@@ -199,7 +182,7 @@ module.factory 'CampaignManager', ['AuctionManager', 'UuidManager', '$http', '$q
         slot.active = restrictions == false or not _.find restrictions, (restriction) ->
           restriction[0] == slot.date.getHours() and restriction[1] == slot.date.getDay()
     applyCategoryRestrictions: (chain) ->
-      restrictions = if ~~@restrictions.auction.active==2 then @restrictions.auction.categories else false
+      restrictions = if ~~@restrictions.auction.active==1 then @restrictions.auction.categories else false
       for slot in @content.slots
         continue if chain and not slot.active
         slot.active = restrictions == false or _.find restrictions, (restriction) ->

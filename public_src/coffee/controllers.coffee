@@ -26,7 +26,7 @@ window.UserLoginCtrl = ($scope, $location, CacheManager, UserManager) ->
       user_id = ~~res
       if user_id > 0
         CacheManager.set 'user_id', user_id
-        $location.path '/main'
+        $location.path '/auction'
       else
         $scope.credentialsInvalid = true
 
@@ -124,7 +124,7 @@ window.CampaignDetailCtrl = ($scope, $q, $routeParams, $log, $location, UserMana
           CacheManager.set 'campaign', $scope.campaign
           CacheManager.set 'auction', $scope.auction
           CacheManager.set 'reaches', $scope.reaches
-        , -> 
+        , ->
           $log.log 'loading data from cache')
       .then( ->
         if not $scope.campaign

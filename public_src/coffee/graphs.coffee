@@ -145,8 +145,8 @@ module.directive 'targettweaks', ['$parse', '$compile', ($parse, $compile) ->
   directive =
     replace: true
     compile: (tElm, tAttr, transclude) ->
-      margin = {top: 10, right: 10, bottom: 100, left: 50}
-      margin2 = {top: 280, right: 10, bottom: 20, left: 50}
+      margin = {top: 10, right: 10, bottom: 100, left: 60}
+      margin2 = {top: 280, right: 10, bottom: 20, left: 60}
       width = tElm.width() - margin.left - margin.right
       height = tElm.height() - margin.top - margin.bottom
       height2 = tElm.height() - margin2.top - margin2.bottom
@@ -512,7 +512,7 @@ module.directive 'auctionreach', ['$parse','$compile', ($parse, $compile) ->
       slots: '='
       reach: '='
     compile: (tElm, tAttr, transclude) ->
-      margin = {top: 10, right: 10, bottom: 20, left: 50}
+      margin = {top: 10, right: 10, bottom: 20, left: 60}
 
       width = tElm.width() - margin.left - margin.right
       height = tElm.height() - margin.top - margin.bottom

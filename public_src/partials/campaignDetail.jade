@@ -82,9 +82,9 @@ h2
           td {{getActiveSlots().length}}
           td: a(href="#/campaign/calendar") details
         tr
-          td: em more..
-          td &nbsp;
-          td &nbsp;
+          td target pts.
+          td {{campaign.content.slots.length}}
+          td {{getActiveSlots().length}}
           td &nbsp;
 
 h2
@@ -129,21 +129,9 @@ div(ng-show="campaign.restrictions.timeframe.active")
       li
         label
           input(type="radio", name="attr-auction-restrict", ng-model="campaign.restrictions.auction.active", value="1")
-          |  Choose main demographic audience
-      li
-        label
-          input(type="radio", name="attr-auction-restrict", ng-model="campaign.restrictions.auction.active", value="2")
           |  Free definition of criteria (advanced)
 
 .row(ng-show="campaign.restrictions.auction.active==1")
-  hr
-  .span4
-    h4 Demographic audience
-    pre
-      | Missing 
-      | Missing
-
-.row(ng-show="campaign.restrictions.auction.active==2")
   hr
   .span4
     h4 Free definition of criteria
@@ -152,7 +140,7 @@ div(ng-show="campaign.restrictions.timeframe.active")
       tr
         td Category
         td
-          select(ng-model="campaign.restrictions.auction.categories", ng-options="c for c in auction.categories", multiple)
+          select(ng-model="campaign.restrictions.auction.categories", ng-options="c for c in auction.content.categories", multiple)
 h2
   | Actions
   span.info Choose to save, publish, or reset the campaign
