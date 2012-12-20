@@ -27,36 +27,45 @@ h2
             .input-append
               input.input-medium(type="number", min="{{campaign.minBudget()}}", step="100", ng-model="campaign.budget", required)
               span.add-on &euro;
+          td.span2
+            a.btn.btn-link(ng-show="targets == 1", ng-click="targets = targets+1"): i.icon-plus
+        tr(ng-show="targets >= 2")
+          td: input.input-medium(ng-model="campaign.target.quantity", type="number", min="0", required)
           td
-            a.btn.btn-link: i.icon-plus
+            .input-append
+              input.input-medium(type="number", min="{{campaign.minBudget()}}", step="100", ng-model="campaign.budget", required)
+              span.add-on &euro;
+          td.span2
+            a.btn.btn-link(ng-show="targets == 2", ng-click="targets = targets+1"): i.icon-plus
+            a.btn.btn-link(ng-show="targets == 2", ng-click="targets = targets-1"): i.icon-minus
+        tr(ng-show="targets >= 3")
+          td: input.input-medium(ng-model="campaign.target.quantity", type="number", min="0", required)
+          td
+            .input-append
+              input.input-medium(type="number", min="{{campaign.minBudget()}}", step="100", ng-model="campaign.budget", required)
+              span.add-on &euro;
+          td.span2
+            a.btn.btn-link(ng-click="targets = targets-1"): i.icon-minus
   .span2
     span.info.pull-right
-      a(href="#/campaign/targetTweak") details / change target
+      a(href="#/campaign/targetTweak/{{campaign.auction_id}}") details / change target
 
 // advert
 h2
   | Advert
   span.info The advert used for this campaign
 .row
-  .span5
+  .span7
     table.table.table-condensed
       thead
         tr
-          th {{campaign.advert.name}}
-      tr
-        td Length:
-        td {{campaign.advert.duration}} s
-      tr
-        td Tags:
-        td
-          ul.nopoints
-            li(ng-repeat="tag in campaign.advert.tags") {{tag}}
-
-  .span3
-    img(ng-src="{{campaign.advert.thumb}}")
-  .span1.info.right
-    a change
-
+          th Name
+          th Length (in seconds)
+      tbody
+        tr
+          td: input.input-medium(ng-model="campaign.advert.name", type="text", required)
+          td
+            input.input-medium(ng-model="campaign.advert.duration", type="number", min="0", max="89", required)
 
 // auction
 h2
@@ -80,7 +89,7 @@ h2
           td # slots
           td {{campaign.content.slots.length}}
           td {{getActiveSlots().length}}
-          td: a(href="#/campaign/calendar") details
+          td: a(href="#/campaign/calendar/{{campaign.auction_id}}") details
         tr
           td target pts.
           td {{campaign.content.slots.length}}

@@ -17,7 +17,7 @@ mockCampaign =
       categories: []
   advert:
     name: 'my advert'
-    thumb: 'img/example_advert.jpg'
+    thumb: '/img/example_advert.jpg'
     duration: 45
     tags: [
       'owls'
@@ -122,12 +122,8 @@ module.factory 'AuctionManager', ['$http', '$q', '$log', ($http, $q, $log) ->
   Auction.prototype.__proto__ = mockAuction
 
   $log.log 'initializing AuctionManager'
-  _cache = {}
+  _cache = window._auctionCache = {}
   return {
-    #get: (id) ->
-      #if id not of _cache
-        #_cache[id] = new Auction(id)
-      #return _cache[id]
     list: () ->
       d = $q.defer()
       req = $http.get '/auction'
@@ -137,19 +133,25 @@ module.factory 'AuctionManager', ['$http', '$q', '$log', ($http, $q, $log) ->
         $log.log status, res
         d.reject (res)
       return d.promise
-    get: (id) ->
+    get: (auction_id, use_cache) ->
       d = $q.defer()
-      req = $http.get "/auction/#{id}"
-      req.success (res) ->
-        res.auction.content = JSON.parse res.auction.content
-        for slot in res.auction.content.slots
-          slot.date = new Date(slot.date)
-        _.each res.reaches, (reach) ->
-          reach.content = JSON.parse reach.content
-        d.resolve res
-      req.error (res, status, headers, config) ->
-        $log.log status, res
-        d.reject res
+      if auction_id and use_cache != false and auction_id of _cache
+        $log.log 'loading auction from cache:', auction_id
+        d.resolve _cache[auction_id]
+      else
+        $log.log 'loading auction from server:', auction_id
+        req = $http.get "/auction/#{auction_id}"
+        req.success (res) ->
+          res.auction.content = JSON.parse res.auction.content
+          _.each res.auction.content.slots, (slot) ->
+            slot.date = new Date(slot.date)
+          _.each res.reaches, (reach) ->
+            reach.content = JSON.parse reach.content
+          _cache[auction_id] = res if use_cache != false
+          d.resolve res
+        req.error (res, status) ->
+          $log.log status, res
+          d.reject res
       return d.promise
   }
 ]
@@ -157,7 +159,8 @@ module.factory 'AuctionManager', ['$http', '$q', '$log', ($http, $q, $log) ->
 
 module.factory 'CampaignManager', ['AuctionManager', 'UuidManager', '$http', '$q', '$log', (AuctionManager, uuid, $http, $q, $log) ->
   class Campaign
-    constructor: (@id) ->
+    constructor: (@auction_id) ->
+      @id = 0
       @content = {slots: []}
     minBudget: ->
       slot_min_avg = 1
@@ -197,8 +200,9 @@ module.factory 'CampaignManager', ['AuctionManager', 'UuidManager', '$http', '$q
   $log.log 'initializing CampaignManager'
   _cache = {}
   return {
-    create: (auction_id) ->
-      campaign = new Campaign()
+    create: (auction_id, use_cache) ->
+      campaign = new Campaign auction_id
+      _cache[auction_id] = campaign if use_cache != false
       return campaign
 
     list: (params) ->
@@ -213,35 +217,73 @@ module.factory 'CampaignManager', ['AuctionManager', 'UuidManager', '$http', '$q
         d.reject res
       return d.promise
 
-    get: (campaign_id, use_cache) ->
+    get: (auction_id, use_cache) ->
       d = $q.defer()
-      if campaign_id and use_cache != false and campaign_id in _cache
-        d.resolve _cache[campaign_id]
+      if auction_id and use_cache != false and auction_id of _cache
+        $log.log 'loading campaign from cache:', auction_id
+        d.resolve _cache[auction_id]
       else
-        req = $http.get "campaign/#{campaign_id}"
+        $log.log 'loading campaign from server:', auction_id
+        req = $http.get "campaign/#{auction_id}"
         req.success (res) ->
+          campaign = new Campaign auction_id
+          _.extend campaign, res
+          _cache[auction_id] = res if use_cache != false
           d.resolve res
+        req.error (res, status) ->
+          $log.log status, res if status != 404
+          d.reject res
       return d.promise
 
     save: (campaign) ->
       d = $q.defer()
       if not campaign.id
-        req = $http.post 'campaign', auction
+        req = $http.post "campaign/#{campaign.auction_id}", campaign
       else
-        req = $http.put "campaign/#{campaign.id}", auction
+        req = $http.put "campaign/#{campaign.auction_id}", campaign
       req.success (campaign_id) ->
         campaign.id = campaign_id
-        req.resolve campaign_id
+        d.resolve campaign_id
       req.error (res, status) ->
         $log.log status, res
         d.reject res
       return d.promise
 
     delete: (auction_id) ->
-      return $http.delete 'auction', auction_id
+      d = $q.defer()
+      req = $http.delete "campaign/#{campaign.auction_id}"
+      req.success (rows) ->
+        d.resolve rows
+      req.error (res, status) ->
+        $log.log status, res
+        d.reject res
+      return d.promise
   }
 ]
 
+module.factory 'CampaignLoader', ['$q','$log','AuctionManager','CampaignManager', ($q, $log, AuctionManager, CampaignManager) ->
+  return {
+    'get': (auction_id, user_id) ->
+      d = $q.defer()
+      req = AuctionManager.get auction_id
+      req.then (res) ->
+        auction = res.auction
+        reaches = res.reaches
+        req = CampaignManager.get auction_id, user_id
+        req.then(
+          (res) ->
+            $log.log 'campaign loaded'
+            campaign = res
+            d.resolve [campaign, auction, reaches]
+          , ->
+            $log.log 'creating new campaign object'
+            campaign = CampaignManager.create auction_id
+            campaign.buildSlots auction.content.slots
+            d.resolve [campaign, auction, reaches]
+        )
+        return d.promise      
+  }
+]
 
 module.value 'version','0.1'
 

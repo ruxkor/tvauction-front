@@ -6,137 +6,150 @@ module = angular.module('tvAuction.graphs' , [])
 # this directive is used to whow a calendar-like view
 # and updates directly the campaign object, containing
 # the daily and hourly restrictions
-module.directive 'timerestrictions', ['$parse', ($parse) ->
+module.directive 'timerestrictions', ['$parse', '$compile', ($parse, $compile) ->
   directive =
     replace: true
-    link: (scope, elm, attr, ctrl) ->
-      ngModel = $parse attr.ngModel
-
-      entries = ngModel scope
-
-      # build data arrays
-      calendar = []
-      for day in [1,2,3,4,5,6,0]
-        for hour in [0...24]
-          calendar_entry = [hour,day]
-          in_entry = _.any entries, (entry) ->
-            calendar_entry[0] == entry[0] && calendar_entry[1] == entry[1]
-          calendar_entry.push in_entry
-          calendar.push calendar_entry
-
+    compile: (tElm, tAttr, transclude) ->
       horiz = ((if 0==i%2 then i else '') for i in [0...24])
       vert = ['Mo', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
       # build scales
       x = d3.scale.ordinal()
         .domain([0...25])
-        .rangeBands([0,elm.width()])
+        .rangeBands([0,tElm.width()])
       y = d3.scale.ordinal()
         .domain([0...8])
-        .rangeBands([0,elm.height()])
+        .rangeBands([0,tElm.height()])
 
       # create main chart
-      graph = d3.selectAll(elm).append('svg')
+      graph = d3.selectAll(tElm).append('svg')
 
       chart = graph
         .append('g')
         .attr('class','chart')
 
-      # create fields
-      fields = chart
-        .selectAll('rect')
-        .data(calendar)
-        .enter()
-        .append('rect')
-        .attr('class','field')
-        .attr('x', (d,i,j) -> x(d[0]+1) )
-        .attr('y', (d,i,j) -> y(d[1]+1) )
-        .attr('width', x.rangeBand())
-        .attr('height', y.rangeBand())
-        .classed('restricted', (d) -> d[2])
-
-      # create horizontal header text
-      graph
-        .selectAll('text.border.horiz')
-        .data(horiz)
-        .enter()
-        .append('text')
-        .attr('class','border.horiz')
-        .attr('x', (d,i) -> x(i+1) + 0.5*x.rangeBand())
-        .attr('y', y.rangeBand())
-        .attr('dy', '-0.2em')
-        .attr('text-anchor','middle')
-        .text(String)
-        
-
-      # create vertical header text
-      graph
-        .selectAll('text.border.vert')
-        .data(vert)
-        .enter()
-        .append('text')
-        .attr('class','border.vert')
-        .attr('x', 0)
-        .attr('y', (d,i) -> y(i+1))
-        .attr('dy', '1em')
-        .text(String)
-
       # add selection brush
       brush = d3.svg.brush().x(x).y(y)
 
-      brushstart = ->
-      brushmove = ->
-        brush_dims = d3.event.target.extent()
-        fields.classed('inselection', (d) ->
-          field_dims = [
-            [x(d[0]+1)+x.rangeBand(),y(d[1]+1)+y.rangeBand()]
-            [x(d[0]+1),y(d[1]+1)]
-          ]
-          brush_dims[0][0] <= field_dims[0][0] &&
-          brush_dims[1][0] >= field_dims[1][0] &&
-          brush_dims[0][1] <= field_dims[0][1] &&
-          brush_dims[1][1] >= field_dims[1][1]
+      drawCalendar = (entries, scope) ->
+        # build data arrays
+        calendar = []
+        for day in [1,2,3,4,5,6,0]
+          for hour in [0...24]
+            calendar_entry = [hour,day]
+            in_entry = _.any entries, (entry) ->
+              calendar_entry[0] == entry[0] && calendar_entry[1] == entry[1]
+            calendar_entry.push in_entry
+            calendar.push calendar_entry
+
+        # create fields
+        fields = chart
+          .selectAll('rect.field')
+          .data(calendar)
+        fields
+          .enter()
+          .append('rect')
+          .attr('class','field')
+          .attr('x', (d,i,j) -> x(d[0]+1) )
+          .attr('y', (d,i,j) -> y(d[1]+1) )
+          .attr('width', x.rangeBand())
+          .attr('height', y.rangeBand())
+        fields
+          .classed('restricted', (d) -> d[2])
+
+        # create horizontal header text
+        graph
+          .selectAll('text.border.horiz')
+          .data(horiz)
+          .enter()
+          .append('text')
+          .attr('class','border horiz')
+          .attr('x', (d,i) -> x(i+1) + 0.5*x.rangeBand())
+          .attr('y', y.rangeBand())
+          .attr('dy', '-0.2em')
+          .attr('text-anchor','middle')
+          .text(String)
+
+        # create vertical header text
+        graph
+          .selectAll('text.border.vert')
+          .data(vert)
+          .enter()
+          .append('text')
+          .attr('class','border vert')
+          .attr('x', 0)
+          .attr('y', (d,i) -> y(i+1))
+          .attr('dy', '1em')
+          .text(String)
+
+      return (scope, elm, attr, ctrl) ->
+        ngModel = $parse attr.ngModel
+
+        brushstart = ->
+        brushmove = ->
+          brush_dims = d3.event.target.extent()
+          fields = chart.selectAll('rect')
+          fields.classed('inselection', (d) ->
+            field_dims = [
+              [x(d[0]+1)+x.rangeBand(),y(d[1]+1)+y.rangeBand()]
+              [x(d[0]+1),y(d[1]+1)]
+            ]
+            brush_dims[0][0] <= field_dims[0][0] &&
+            brush_dims[1][0] >= field_dims[1][0] &&
+            brush_dims[0][1] <= field_dims[0][1] &&
+            brush_dims[1][1] >= field_dims[1][1]
+          )
+
+        brushend = ->
+          fields = chart.selectAll('rect.field')
+          selected = fields.filter('.inselection')
+          restricted =  selected.filter('.restricted')
+          inactive =  selected.filter(':not(.restricted)')
+          restricted.classed('restricted', false)
+          inactive.classed('restricted', true)
+          selected.classed('inselection', false)
+          brush.clear()
+          graph.call(brush)
+          
+          restrictedEntries = _.map fields.filter('.restricted').data(), (d) ->
+            d[0...2]
+          ngModel.assign scope, restrictedEntries
+          scope.$digest()
+
+        clearselection = ->
+          fields = chart.selectAll('rect.field')
+          fields.classed('restricted', false)
+          ngModel.assign scope, []
+          scope.$digest()
+
+          
+        graph
+        .append('g')
+        .attr('class','brush')
+        .call(brush
+          .on('brushstart', brushstart)
+          .on('brush', brushmove)
+          .on('brushend', brushend)
         )
 
-      brushend = ->
-        selected = fields.filter('.inselection')
-        restricted =  selected.filter('.restricted')
-        inactive =  selected.filter(':not(.restricted)')
-        restricted.classed('restricted', false)
-        inactive.classed('restricted', true)
-        selected.classed('inselection', false)
-        brush.clear()
-        chart.call(brush)
-        
-        restrictedEntries = _.map fields.filter('.restricted').data(), (d) ->
-          d[0...2]
-        ngModel.assign scope, restrictedEntries
-        scope.$digest()
+        d3.selectAll(elm)
+          .append('div')
+          .attr('class','row')
+          .append('div')
+          .attr('class','span9')
+          .attr('style','text-align: right;')
+          .append('a')
+          .attr('class','info')
+          .text('Reset')
+          .on('click', clearselection)
 
-      clearselection = ->
-        fields.classed('restricted', false)
-        ngModel.assign scope, []
-        scope.$digest()
+        scope.$watch ngModel, (newValue, oldValue) ->
+          return unless newValue
+          drawCalendar(newValue, scope)
+        , true
 
-      chart
-      .append('g')
-      .attr('class','brush')
-      .call(brush
-        .on('brushstart', brushstart)
-        .on('brush', brushmove)
-        .on('brushend', brushend)
-      )
 
-      d3.selectAll(elm)
-        .append('div')
-        .attr('class','row')
-        .append('div')
-        .attr('class','span9')
-        .attr('style','text-align: right;')
-        .append('a')
-        .attr('class','info')
-        .text('Reset')
-        .on('click', clearselection)
+
 
   return directive
 ]

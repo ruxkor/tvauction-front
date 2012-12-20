@@ -4,6 +4,11 @@ bcrypt = require 'bcrypt'
 handleError = (err) ->
   throw err if err
 
+auction = 
+  isExistingAndBeforeDeadline: (auction_id, _) ->
+    rows = db.query 'SELECT 1 FROM auction WHERE id=? AND deadline > NOW()', [auction_id], _
+    return !!rows.length
+
 module.exports = (config, db) ->
   user:
     # route for the user login.
@@ -52,13 +57,13 @@ module.exports = (config, db) ->
         WHERE campaign.id IS NOT NULL OR auction.deadline > NOW()
         ORDER BY auction.from'''
       rows = db.query stmt, [req.session.user_id], _
-      res.end JSON.stringify rows
+      res.end JSON.stringify(rows)
     )(handleError)
 
 
     # gets a specific auction
     show: (req, res) -> ( (_) ->
-      auction_id = req.params.auction
+      auction_id = req.params.auction_id
       rows = db.query 'SELECT * from auction WHERE id=?', [auction_id], _
       if not rows.length
         res.writeHead 404
@@ -78,23 +83,20 @@ module.exports = (config, db) ->
     # lists all campaigns for a user
     index: (req, res) -> ( (_) ->
       stmt = '''SELECT campaign.id, campaign.auction_id, campaign.published, campaign.modified, auction.from, auction.to, auction.deadline
+                FROM campaign
                 JOIN auction ON (auction.id=campaign.auction_id)
                 WHERE campaign.user_id=?
-                ORDER BY auction.from'''
+                ORDER BY auction.from, auction.deadline'''
       rows = db.query stmt, [req.session.user_id], _
-      res.end JSON.stringify rows
+      res.end JSON.stringify(rows)
     )(handleError)
 
 
     # gets a specific campaign
     # a user can only get his own campaigns
     show: (req, res) -> ( (_) ->
-      campaign_id = req.params.campaign
-      if not campaign_id
-        res.writeHead
-        res.end()
-        return
-      rows = db.query 'SELECT * from campaign WHERE id=? and user_id=?', [campaign_id, req.session.user_id], _
+      auction_id = req.params.auction_id
+      rows = db.query 'SELECT * from campaign WHERE auction_id=? and user_id=?', [auction_id, req.session.user_id], _
       if not rows.length
         res.writeHead 404
         res.end()
@@ -106,56 +108,62 @@ module.exports = (config, db) ->
 
     # create a campaign
     create: (req, res) -> ( (_) ->
-      campaign_id = req.params.campaign
-      campaign_columns =
-        user_id: req.session.user_id
-        auction_id: ~~req.body.auction_id
-        published: !!req.body.published
-        modified: new Date()
-        content: req.body.campaign
-
-      # check if a campaign can still be created for the auction
-      rows = db.query 'SELECT 1 FROM auction WHERE id=? AND deadline < NOW()', [campaign_columns.auction_id], _
-      if not rows.length
+      auction_id = req.params.auction_id
+      if not auction.isExistingAndBeforeDeadline auction_id, _
         res.writeHead 403
         res.end 'auction not existing or locked'
         return
 
+      campaign_columns =
+        user_id: req.session.user_id
+        auction_id: auction_id
+        published: !!req.body.published
+        modified: new Date()
+        content: req.body.campaign
+
       params = [campaign_id, req.session.user_id]
       rows = db.query 'INSERT INTO campaign SET ?', params, _
-      res.end ''+rows.affectedRows
+      res.end ''+rows.insertId
     )(handleError)
 
 
     # update a campaign
     update: (req, res) -> ( (_) ->
-      campaign_id = req.params.campaign
-      campaign_columns =
-        published: req.body.published
-        modified: new Date()
-      # only update the content field if passed
-      if req.body.campaign
-        campaign_columns.content = req.body.campaign
-
-      # check if a campaign can still be created for the auction
-      stmt = '''SELECT 1 FROM campaign
-                JOIN auction ON (auction.id=campaign.auction_id AND auction.deadline > NOW())
-                WHERE campaign.id=? AND campaign.user_id=?'''
-      rows = db.query stmt, [campaign_id, req.session.user_id]
-      if not rows.length
+      auction_id = req.params.auction_id
+      if not auction.isExistingAndBeforeDeadline auction_id, _
         res.writeHead 403
         res.end 'auction not existing or locked'
         return
 
-      params = [campaign_columns, campaign_id, req.session.user_id]
-      rows = db.query 'UPDATE campaign SET ? WHERE campaign_id=? AND user_id=?', params, _
-      res.end ''+rows.affectedRows
+      campaign_columns =
+        published: !!req.body.published
+        modified: new Date()
+      # only add campaign body if it is actually sent
+      campaign_columns.content = req.body.campaign if req.body.campaign
+
+      params = [campaign_columns, auction_id, req.session.user_id]
+      rows = db.query 'UPDATE campaign SET ? WHERE auction_id=? AND user_id=?', params, _
+      if rows.affectedRows
+        params = [auction_id, req.session.user_id]
+        rows = db.query 'SELECT id FROM campaign WHERE auction_id=? AND user_id=?', params, _
+        res.end ''+rows[0].id
+      else
+        res.writeHead 500
+        res.end()
     )(handleError)
 
 
     # delete a campaign. the campaign 
     delete: (req, res) -> ( (_) ->
-      params = [campaign_id, req.session.user_id]
-      rows = db.query 'DELETE FROM campaign WHERE campaign_id=? AND user_id=?', params, _
+      auction_id = req.params.auction_id
+      if not auction.isExistingAndBeforeDeadline auction_id, _
+        res.writeHead 403
+        res.end 'auction not existing or locked'
+        return
+
+      params = [auction_id, req.session.user_id]
+      rows = db.query 'DELETE FROM campaign WHERE auction_id=? AND user_id=?', params, _
       res.end ''+rows.affectedRows
     )(handleError)
+
+

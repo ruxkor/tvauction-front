@@ -47,7 +47,7 @@ checkIntValue = (valName) ->
 app = express()
 app.configure ->
   app.set 'port', process.env.PORT or 3000
-  app.set 'views', path.join(__dirname, 'views')
+  app.set 'views', path.join(__dirname, '/views')
   app.set 'view engine', 'jade'
   app.use express.favicon()
   app.use express.logger('dev')
@@ -78,21 +78,21 @@ db = require('./app/database')(config)
 routes = require('./app/routes')(config, db)
 
 # guarantee integer values and throw an error if they are not set
-for valName in ['campaign','auction']
+for valName in ['auction_id']
   app.param valName, checkIntValue(valName)
 
-app.post '/user/login', routes.user.login
+app.all '/user/login', routes.user.login
 app.get '/user/logout', routes.user.logout
 app.get '/user/check', routes.user.check
 
 app.get '/auction', routes.auction.index
-app.get '/auction/:auction', routes.auction.show
+app.get '/auction/:auction_id', routes.auction.show
 
 app.get '/campaign', routes.campaign.index
-app.get '/campaign/:campaign', routes.campaign.show
+app.get '/campaign/:auction_id', routes.campaign.show
 app.post '/campaign', routes.campaign.create
-app.put '/campaign/:campaign', routes.campaign.update
-app.delete '/campaign/:campaign', routes.campaign.delete
+app.put '/campaign/:auction_id', routes.campaign.update
+app.delete '/campaign/:auction_id', routes.campaign.delete
 
 
 # create web server

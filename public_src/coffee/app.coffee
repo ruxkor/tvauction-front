@@ -24,30 +24,25 @@ angular
     $routeProvider.when '/auction',
       templateUrl: 'partials/auction.html'
       controller: AuctionCtrl
-    $routeProvider.when '/auction/:auction',
+    $routeProvider.when '/auction/:auction_id',
       templateUrl: 'partials/auctionView.html'
       controller: AuctionViewCtrl
 
     $routeProvider.when '/campaign',
       templateUrl: 'partials/campaign.html'
       controller: CampaignCtrl
-    $routeProvider.when '/campaign/resume',
+    $routeProvider.when '/campaign/:auction_id',
+      templateUrl: 'partials/campaignView.html'
+      controller: CampaignViewCtrl
+    $routeProvider.when '/campaign/edit/:auction_id',
       templateUrl: 'partials/campaignDetail.html'
       controller: CampaignDetailCtrl
-    $routeProvider.when '/campaign/new/:auction',
-      templateUrl: 'partials/campaignDetail.html'
-      controller: CampaignDetailCtrl
-    $routeProvider.when '/campaign/calendar',
+    $routeProvider.when '/campaign/calendar/:auction_id',
       templateUrl: 'partials/campaignDetailCalendar.html'
       controller: CampaignDetailCalendarCtrl
-    $routeProvider.when '/campaign/targetTweak',
+    $routeProvider.when '/campaign/targetTweak/:auction_id',
       templateUrl: 'partials/campaignDetailTargetTweak.html'
       controller: CampaignDetailTargetTweakCtrl
-    $routeProvider.when '/campaign/:campaign',
-      templateUrl: 'partials/campaignDetail.html'
-      controller: CampaignDetailCtrl
-
 
     $routeProvider.otherwise {redirectTo: '/'}
-
   ]

@@ -59,7 +59,6 @@ module.directive 'slotPopup', ['$parse', '$compile', ($parse, $compile) ->
       scope.closePopup = ->
         destroyPopover()
       scope.saveInput = ->
-        console.info 'yo3', arguments
         scope.slot = $.extend scope.slot,
           forced: scope.input.forced
           target: scope.input.target

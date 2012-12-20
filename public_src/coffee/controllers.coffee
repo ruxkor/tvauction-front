@@ -1,21 +1,25 @@
 'use strict'
 
-window.IndexCtrl = ($scope, $location, CacheManager) ->
+# set global object for coffeescript
+global = window if typeof global == 'undefined'
+
+
+global.IndexCtrl = ($scope, $location, CacheManager) ->
   user_id = CacheManager.get 'user_id'
   if user_id
     $location.path '/main'
     return
 
-window.MainCtrl = ($scope, $location, CacheManager) ->
+global.MainCtrl = ($scope, $location, CacheManager) ->
   user_id = CacheManager.get 'user_id'
   if not user_id
     $location.path '/user/login'
     return
 
-window.HelpCtrl = ($scope, $location) ->
+global.HelpCtrl = ($scope, $location) ->
 
 
-window.UserLoginCtrl = ($scope, $location, CacheManager, UserManager) ->
+global.UserLoginCtrl = ($scope, $location, CacheManager, UserManager) ->
   $scope.$watch 'user', (newValue, oldValue) ->
     $scope.credentialsInvalid = false unless angular.equals newValue, oldValue
   , true
@@ -30,7 +34,7 @@ window.UserLoginCtrl = ($scope, $location, CacheManager, UserManager) ->
       else
         $scope.credentialsInvalid = true
 
-window.UserLogoutCtrl = ($scope, $location, UserManager) ->
+global.UserLogoutCtrl = ($scope, $location, UserManager) ->
   $scope.successful = null
 
   d = UserManager.logout()
@@ -39,12 +43,14 @@ window.UserLogoutCtrl = ($scope, $location, UserManager) ->
     setTimeout ->
       $location.path '/'
       $scope.$apply()
-    , 3000
+    , 1000
   , (res) ->
     $scope.successful = false
 
 
-window.AuctionCtrl = ($scope, UserManager, AuctionManager) ->
+global.AuctionCtrl = ($scope, $window, UserManager, AuctionManager) ->
+  $window.onbeforeunload = null
+
   d = UserManager.check()
   d.success (user_id) ->
     if not user_id
@@ -54,83 +60,58 @@ window.AuctionCtrl = ($scope, UserManager, AuctionManager) ->
     d.then (auctions) ->
       $scope.auctions = auctions
 
-window.AuctionViewCtrl = ($scope, $routeParams, UserManager, AuctionManager) ->
+global.AuctionViewCtrl = ($scope, $routeParams, $window, UserManager, AuctionManager) ->
+  $window.onbeforeunload = null
+
   d = UserManager.check()
   d.success (user_id) ->
     if not user_id
       $location.path '/user/login'
       return
 
-    auction_id = ~~$routeParams.auction
+    auction_id = ~~$routeParams.auction_id
     d = AuctionManager.get auction_id
     d.then (res) ->
       $scope.auction = res.auction
       $scope.reaches = res.reaches
       $scope.reach_active = res.reaches[0]
 
-window.CampaignCtrl = ($scope, UserManager, CampaignManager, AuctionManager) ->
+global.CampaignCtrl = ($scope, $window, UserManager, CampaignManager, AuctionManager) ->
   d = UserManager.check()
   d.success (user_id) ->
     if not user_id
       $location.path '/user/login'
       return
+
+    # $window.onbeforeunload = null
+
     d = CampaignManager.list()
     d.then (campaigns) ->
       $scope.campaigns = campaigns
 
   # campaigns can be opened/created and deleted
 
-window.CampaignDetailCtrl = ($scope, $q, $routeParams, $log, $location, UserManager, CacheManager, CampaignManager, AuctionManager) ->
-  # if the campaign_id is set, we are updating an auction
+
+global.CampaignViewCtrl = ($scope, UserManager, CampaignManager, AuctionManager) ->
+  return
+
+loadCampaignAuction = ($q, auction_id, user_id) ->
+
+global.CampaignDetailCtrl = ($scope, $routeParams, $log, $location, $window, UserManager, CampaignLoader, CampaignManager, AuctionManager) ->
   d = UserManager.check()
   d.success (user_id) ->
     if not user_id
       $location.path '/'
       return
 
-    campaign_id = ~~$routeParams.campaign
-    auction_id = ~~$routeParams.auction
+    # $window.onbeforeunload = -> 'All entered data will be lost if you did not save your data.'
+    auction_id = ~~$routeParams.auction_id
 
-    $scope.campaign = CacheManager.get 'campaign'
-    $scope.auction = CacheManager.get 'auction'
-    $scope.reaches = CacheManager.get 'reaches'
+    d = CampaignLoader.get auction_id, user_id
+    d.then (res) -> 
+      [$scope.campaign, $scope.auction, $scope.reaches] = res
 
-    d = $q.defer()
-    # load the auction if we are creating a new campaign
-    if not campaign_id and auction_id and (not $scope.auction or $scope.auction.id != auction_id)
-      campaign = CampaignManager.create()
-      req = AuctionManager.get auction_id
-      req.then (res) ->
-        campaign.buildSlots res.auction.content.slots
-        campaign.applyRestrictions()
-        d.resolve [campaign, res.auction, res.reaches]
-    # load the campaign if needed (and then the auction)
-    else if campaign_id and (not $scope.campaign or $scope.campaign.id != campaign_id)
-      req = CampaignManager.get campaign_id
-      req.then (res) ->
-        campaign = res
-        req = AuctionManager.get campaign.auction_id
-        req.then (res) ->
-          d.resolve [campaign, res.auction, res.reaches]
-    # this means we have valid data
-    else
-      d.reject()
-
-    d.promise
-      .then(
-        (res) ->
-          $log.log 'data loaded from server'
-          [$scope.campaign, $scope.auction, $scope.reaches] = res
-          CacheManager.set 'campaign', $scope.campaign
-          CacheManager.set 'auction', $scope.auction
-          CacheManager.set 'reaches', $scope.reaches
-        , ->
-          $log.log 'loading data from cache')
-      .then( ->
-        if not $scope.campaign
-          $location.path '/'
-          return
-      )
+  $scope.targets = 1
 
   $scope.getActiveSlots = ->
     if $scope.campaign then _.filter $scope.campaign.content.slots, (slot) -> slot.active or slot.forced else []
@@ -140,51 +121,47 @@ window.CampaignDetailCtrl = ($scope, $q, $routeParams, $log, $location, UserMana
   , true
 
 
-window.CampaignDetailCalendarCtrl = ($scope, $location, UserManager, CacheManager, CampaignManager, AuctionManager) ->
+global.CampaignDetailCalendarCtrl = ($scope, $routeParams, $log, $location, $window, UserManager, CampaignLoader, CampaignManager, AuctionManager) ->
   d = UserManager.check()
   d.success (user_id) ->
     if not user_id
       $location.path '/user/login'
       return
 
-    $scope.campaign = CacheManager.get 'campaign'
-    $scope.auction = CacheManager.get 'auction'
-    $scope.reaches = CacheManager.get 'reaches'
+    # $window.onbeforeunload = -> 'All entered data will be lost if you did not save your data.'
+    auction_id = ~~$routeParams.auction_id
 
-    if not $scope.campaign
-      $location.path('/')
-      return
+    d = CampaignLoader.get auction_id, user_id
+    d.then (res) -> [$scope.campaign, $scope.auction, $scope.reaches] = res
 
-window.CampaignDetailTargetTweakCtrl = ($scope, $location, UserManager, CacheManager, CampaignManager, AuctionManager) ->
+
+global.CampaignDetailTargetTweakCtrl = ($scope, $routeParams, $log, $location, $window, UserManager, CampaignLoader, CampaignManager, AuctionManager) ->
   d = UserManager.check()
   d.success (user_id) ->
     if not user_id
       $location.path '/user/login'
       return
 
-    $scope.campaign = CacheManager.get 'campaign'
-    $scope.auction = CacheManager.get 'auction'
-    $scope.reaches = CacheManager.get 'reaches'
+    # $window.onbeforeunload = -> 'All entered data will be lost if you did not save your data.'
+    auction_id = ~~$routeParams.auction_id
 
-    if not $scope.campaign
-      $location.path('/')
-      return
+    d = CampaignLoader.get auction_id, user_id
+    d.then (res) -> 
+      [$scope.campaign, $scope.auction, $scope.reaches] = res
 
-    $scope.reach_active = $scope.reaches[0].content.slot_reaches
     $scope.$watch 'reach_active', (newValue, oldValue) ->
-      if newValue and newValue != oldValue
-        $scope.campaign.updateReaches newValue.content.slot_reaches
-
-    $scope.confirmReachChange = ->
-      # TODO do something
-
+      if newValue != oldValue
+        if not oldValue and not confirm('do you want to reset your custom target values?')
+          $scope.reach_active = null
+        else
+          $scope.campaign.updateReaches newValue.content.slot_reaches
   
 
 
 
-HelpCtrl.$inject = ['$scope', '$location']
-UserLoginCtrl.$inject = ['$scope', '$location', 'CacheManager', 'UserManager']
-UserLogoutCtrl.$inject = ['$scope', '$location', 'UserManager']
-CampaignDetailCtrl.$inject = ['$scope', '$q', '$routeParams', '$log', '$location', 'UserManager', 'CacheManager', 'CampaignManager','AuctionManager']
-CampaignDetailCalendarCtrl.$inject = ['$scope', '$location', 'UserManager', 'CacheManager', 'CampaignManager','AuctionManager']
-CampaignDetailTargetTweakCtrl.$inject = ['$scope', '$location', 'UserManager', 'CacheManager', 'CampaignManager','AuctionManager']
+# HelpCtrl.$inject = ['$scope', '$location']
+# UserLoginCtrl.$inject = ['$scope', '$location', 'CacheManager', 'UserManager']
+# UserLogoutCtrl.$inject = ['$scope', '$location', 'UserManager']
+# CampaignDetailCtrl.$inject = ['$scope', '$q', '$routeParams', '$log', '$location', 'UserManager', 'CacheManager', 'CampaignManager','AuctionManager']
+# CampaignDetailCalendarCtrl.$inject = ['$scope', '$location', 'UserManager', 'CacheManager', 'CampaignManager','AuctionManager']
+# CampaignDetailTargetTweakCtrl.$inject = ['$scope', '$location', 'UserManager', 'CacheManager', 'CampaignManager','AuctionManager']
