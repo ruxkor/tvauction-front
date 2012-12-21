@@ -90,7 +90,7 @@ app.get '/auction/:auction_id', routes.auction.show
 
 app.get '/campaign', routes.campaign.index
 app.get '/campaign/:auction_id', routes.campaign.show
-app.post '/campaign', routes.campaign.create
+app.post '/campaign/:auction_id', routes.campaign.create
 app.put '/campaign/:auction_id', routes.campaign.update
 app.delete '/campaign/:auction_id', routes.campaign.delete
 

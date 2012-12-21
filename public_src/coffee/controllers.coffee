@@ -111,8 +111,6 @@ global.CampaignDetailCtrl = ($scope, $routeParams, $log, $location, $window, Use
     d.then (res) -> 
       [$scope.campaign, $scope.auction, $scope.reaches] = res
 
-  $scope.targets = 1
-
   $scope.getActiveSlots = ->
     if $scope.campaign then _.filter $scope.campaign.content.slots, (slot) -> slot.active or slot.forced else []
 
@@ -120,6 +118,34 @@ global.CampaignDetailCtrl = ($scope, $routeParams, $log, $location, $window, Use
     $scope.campaign.applyRestrictions() if $scope.campaign
   , true
 
+  $scope.saveCampaign = ->
+    d = CampaignManager.save $scope.campaign
+    d.then (res) ->
+      $log.log 'successfully saved', res
+
+  $scope.publishCampaign = ->
+    campaign_reduced = _.pick $scope.campaign, ['id', 'auction_id', 'user_id']
+    campaign_reduced.published = 1
+    d.then (res) -> $scope.campaign.published = 1
+
+  $scope.unpublishCampaign = ->    
+    campaign_reduced = _.pick $scope.campaign, ['id', 'auction_id', 'user_id']
+    campaign_reduced.published = 0
+    d.then (res) -> $scope.campaign.published = 0
+
+  $scope.deleteCampaign = ->
+    auction_id = $scope.campaign.auction_id
+    d = CampaignManager.delete auction_id
+    d.then (res) ->
+      $log.log 'successfully deleted'
+      $scope.campaign = CampaignManager.create auction_id
+
+  
+  $scope.incrementTarget = ->
+    $scope.campaign.content.targets.push {quantity:0, budget: 0}
+
+  $scope.decrementTarget = ->
+    $scope.campaign.content.targets.pop()
 
 global.CampaignDetailCalendarCtrl = ($scope, $routeParams, $log, $location, $window, UserManager, CampaignLoader, CampaignManager, AuctionManager) ->
   d = UserManager.check()

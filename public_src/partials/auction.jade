@@ -1,0 +1,26 @@
+h1 Auction
+
+h2
+  | Auction List
+  span.info all currently active auctions and auctions on which you already bid
+
+
+table.table.table-bordered
+  tr
+    th id
+    th deadline
+    th from
+    th to
+    th campaign
+
+  tr(ng-repeat="auction in auctions")
+    td
+      a(ng-href="#/auction/{{auction.id}}") auction {{auction.id}}
+    td {{auction.deadline | date}}
+    td {{auction.from | date}}
+    td {{auction.to | date}}
+    td(ng-show="auction.campaign_id")
+      a(ng-href="#/campaign/edit/{{auction.id}}") edit
+    td(ng-hide="auction.campaign_id")
+      a(ng-href="#/campaign/edit/{{auction.id}}") create
+

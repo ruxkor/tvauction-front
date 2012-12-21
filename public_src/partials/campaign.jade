@@ -1,0 +1,23 @@
+h1 Campaign
+
+h2
+  | Campaign List
+  span.info all campaigns created by you
+
+
+table.table.table-bordered
+  tr
+    th id
+    th auction
+    th published
+    th deadline
+    th timeframe
+
+  tr(ng-repeat="campaign in campaigns")
+    td
+      a(ng-href="#/campaign/edit/{{campaign.auction_id}}") campaign {{campaign.id}}
+    td
+      a(ng-href="#/auction/{{campaign.auction_id}}") auction {{campaign.auction_id}}
+    td {{campaign.published | yesno}}
+    td {{campaign.auction_deadline | date}}
+    td {{campaign.auction_from | date}} - {{campaign.auction_to | date}}

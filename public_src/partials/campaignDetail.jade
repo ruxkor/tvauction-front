@@ -7,7 +7,7 @@ h2
   .span2
     label Campaign name
   .span3
-    input.span2(type="text",ng-model="campaign.name",required)
+    input.span2(type="text",ng-model="campaign.content.name",required, ng-disabled="auction.isLocked()")
 
 h2
   | Targets
@@ -21,31 +21,16 @@ h2
           th maximum budget
           th &nbsp;
       tbody
-        tr
-          td: input.input-medium(ng-model="campaign.target.quantity", type="number", min="0", required)
+        tr(ng-repeat="target in campaign.content.targets")
+          td: input.input-medium(ng-model="target.quantity", type="number", min="0", required, ng-disabled="auction.isLocked()")
           td
             .input-append
-              input.input-medium(type="number", min="{{campaign.minBudget()}}", step="100", ng-model="campaign.budget", required)
+              input.input-medium(type="number", min="{{campaign.minBudget(target.quantity)}}", step="100", ng-model="target.budget", required, ng-disabled="auction.isLocked()")
               span.add-on &euro;
           td.span2
-            a.btn.btn-link(ng-show="targets == 1", ng-click="targets = targets+1"): i.icon-plus
-        tr(ng-show="targets >= 2")
-          td: input.input-medium(ng-model="campaign.target.quantity", type="number", min="0", required)
-          td
-            .input-append
-              input.input-medium(type="number", min="{{campaign.minBudget()}}", step="100", ng-model="campaign.budget", required)
-              span.add-on &euro;
-          td.span2
-            a.btn.btn-link(ng-show="targets == 2", ng-click="targets = targets+1"): i.icon-plus
-            a.btn.btn-link(ng-show="targets == 2", ng-click="targets = targets-1"): i.icon-minus
-        tr(ng-show="targets >= 3")
-          td: input.input-medium(ng-model="campaign.target.quantity", type="number", min="0", required)
-          td
-            .input-append
-              input.input-medium(type="number", min="{{campaign.minBudget()}}", step="100", ng-model="campaign.budget", required)
-              span.add-on &euro;
-          td.span2
-            a.btn.btn-link(ng-click="targets = targets-1"): i.icon-minus
+            button.btn.btn-link(ng-show="$last && $index < 2", ng-click="incrementTarget()", ng-disabled="auction.isLocked()"): i.icon-plus
+            button.btn.btn-link(ng-show="$last && $index > 0", ng-click="decrementTarget()", ng-disabled="auction.isLocked()"): i.icon-minus
+
   .span2
     span.info.pull-right
       a(href="#/campaign/targetTweak/{{campaign.auction_id}}") details / change target
@@ -63,9 +48,9 @@ h2
           th Length (in seconds)
       tbody
         tr
-          td: input.input-medium(ng-model="campaign.advert.name", type="text", required)
+          td: input.input-medium(ng-model="campaign.content.advert.name", type="text", required, ng-disabled="auction.isLocked()")
           td
-            input.input-medium(ng-model="campaign.advert.duration", type="number", min="0", max="89", required)
+            input.input-medium(ng-model="campaign.content.advert.duration", type="number", min="0", max="89", required, ng-disabled="auction.isLocked()")
 
 // auction
 h2
@@ -107,22 +92,22 @@ h2
     ul.nopoints
       li
         label
-          input(type="radio", name="attr-timeframe-restrict", ng-model="campaign.restrictions.timeframe.active", value="0")
+          input(type="radio", name="attr-timeframe-restrict", ng-model="campaign.content.restrictions.timeframe.active", value="0", ng-disabled="auction.isLocked()")
           |  No day or time restriction
       li
         label
-          input(type="radio", name="attr-timeframe-restrict", ng-model="campaign.restrictions.timeframe.active", value="1")
+          input(type="radio", name="attr-timeframe-restrict", ng-model="campaign.content.restrictions.timeframe.active", value="1", ng-disabled="auction.isLocked()")
           |  Restrict days and time I would like my ad to run
 
 
-div(ng-show="campaign.restrictions.timeframe.active")
+div(ng-show="campaign.content.restrictions.timeframe.active")
   .row
     hr
     .span4
       h4 Restrict days and times
   .row
     .span9
-      .timerestrictions(timerestrictions, ng-model="campaign.restrictions.timeframe.entries")
+      .timerestrictions(timerestrictions, ng-model="campaign.content.restrictions.timeframe.entries")
 
 
 .row
@@ -133,14 +118,14 @@ div(ng-show="campaign.restrictions.timeframe.active")
     ul.nopoints
       li
         label 
-          input(type="radio", name="attr-auction-restrict", ng-model="campaign.restrictions.auction.active", value="0")
+          input(type="radio", name="attr-auction-restrict", ng-model="campaign.content.restrictions.auction.active", value="0", ng-disabled="auction.isLocked()")
           |  No auction-specific restrictions
       li
         label
-          input(type="radio", name="attr-auction-restrict", ng-model="campaign.restrictions.auction.active", value="1")
+          input(type="radio", name="attr-auction-restrict", ng-model="campaign.content.restrictions.auction.active", value="1", ng-disabled="auction.isLocked()")
           |  Free definition of criteria (advanced)
 
-.row(ng-show="campaign.restrictions.auction.active==1")
+.row(ng-show="campaign.content.restrictions.auction.active==1")
   hr
   .span4
     h4 Free definition of criteria
@@ -149,21 +134,23 @@ div(ng-show="campaign.restrictions.timeframe.active")
       tr
         td Category
         td
-          select(ng-model="campaign.restrictions.auction.categories", ng-options="c for c in auction.content.categories", multiple)
+          select(ng-model="campaign.content.restrictions.auction.categories", ng-options="c for c in auction.content.categories", multiple)
 h2
   | Actions
   span.info Choose to save, publish, or reset the campaign
 
 .row
   .span9(style="text-align:right;")
-    button.btn.btn-large
+    button.btn.btn-large.btn-success(ng-show="campaign.id && campaign.published == 0", ng-click="publishCampaign()", ng-disabled="auction.isLocked()")
+      i.icon-upload
+      |  Publish
+    button.btn.btn-large(ng-show="campaign.published == 1", ng-click="unpublishCampaign()", ng-disabled="auction.isLocked()")
+      i.icon-download
+      |  Unpublish      
+    button.btn.btn-large(ng-click="saveCampaign()", ng-disabled="campaign.published || auction.isLocked()")
       i.icon-ok
       |  Save Campaign
-    button.btn.btn-large
-      i.icon-share
-      |  Publish
-    button.btn.btn-large.btn-danger
+    button.btn.btn-large.btn-danger(ng-click="deleteCampaign()", ng-disabled="campaign.published || auction.isLocked()")
       i.icon-trash.icon-white
-      |  Reset
-
+      |  Delete
 hr

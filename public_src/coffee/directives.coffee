@@ -25,6 +25,7 @@ module.directive 'slotPopup', ['$parse', '$compile', ($parse, $compile) ->
     scope:
       slot: '=slotPopup'
       slotTrigger: '='
+      slotLocked: '='
     link : (scope, elm, attr, ctrl) ->
       removeTriggerWatch = null
       removeSlotWatch = null
@@ -59,6 +60,7 @@ module.directive 'slotPopup', ['$parse', '$compile', ($parse, $compile) ->
       scope.closePopup = ->
         destroyPopover()
       scope.saveInput = ->
+        return if scope.slotLocked
         scope.slot = $.extend scope.slot,
           forced: scope.input.forced
           target: scope.input.target

@@ -1,0 +1,27 @@
+h1 Auction {{auction.id}}
+
+h2
+  | Details
+  span.info all information about the auction
+
+dl.dl-horizontal
+  dt id
+  dd {{auction.id}}
+  dt deadline
+  dd {{auction.deadline | date}}
+  dt timeframe
+  dd {{auction.from | date}} - {{auction.to | date}}
+  dt slots
+  dd {{auction.content.slots.length}}
+
+h2
+  | Reach
+  span.info forecasted reach per slot (choose a target group in the drop down list)
+.auctionreach(auctionreach, auction-start="auction.from", auction-end="auction.to", reach="reach_active.content.slot_reaches", slots="auction.content.slots")
+
+dl.dl-horizontal.pull-right
+  .form-horizontal
+    .control-group
+      label.control-label target audience
+      .controls
+        select(ng-model="reach_active", ng-options="v.name for v in reaches")
