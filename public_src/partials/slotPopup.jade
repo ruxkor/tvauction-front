@@ -7,7 +7,7 @@ form
       td: ul
         li Active: {{slot.forced || slot.active}}
         li Forced: 
-          input(type="checkbox", ng-model="input.forced")
+          input(type="checkbox", ng-model="input.forced", ng-disabled="slotLocked")
       td: ul
         li(ng-repeat="category in slot.categories") {{category}}
     tr
@@ -18,6 +18,6 @@ form
       th(colspan="2") Target
     tr
       td(colspan="2",style="padding-top:10px;") 
-        input.input.input-mini(type="number", ng-model="input.target")
-  button.button(ng-click="saveInput()") Save
+        input.input.input-mini(type="number", ng-model="input.target", ng-disabled="slotLocked")
+  button.button(ng-click="saveInput()", ng-disabled="slotLocked") Save
   button.button(ng-click="closePopup()") Close

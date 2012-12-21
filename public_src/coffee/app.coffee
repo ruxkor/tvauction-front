@@ -31,9 +31,6 @@ angular
     $routeProvider.when '/campaign',
       templateUrl: 'partials/campaign.html'
       controller: CampaignCtrl
-    $routeProvider.when '/campaign/:auction_id',
-      templateUrl: 'partials/campaignView.html'
-      controller: CampaignViewCtrl
     $routeProvider.when '/campaign/edit/:auction_id',
       templateUrl: 'partials/campaignDetail.html'
       controller: CampaignDetailCtrl

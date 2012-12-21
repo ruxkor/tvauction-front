@@ -229,6 +229,7 @@ module.directive 'targettweaks', ['$parse', '$compile', ($parse, $compile) ->
           .attr('width', 2)
           .attr('slot-popup', (d,pos) -> tAttr.ngModel+"["+pos+"]" )
           .attr('slot-trigger','slotTrigger')
+          .attr('slot-locked','auction.isLocked()')
           .each( -> $compile(this)(scope) )
         bars
           .classed('active', (d) -> d.active)
@@ -449,6 +450,7 @@ module.directive 'campaigncalendar', ['$parse', '$compile', ($parse, $compile) -
           .attr('class','slot')
           .attr('slot-popup', (d,pos) -> tAttr.ngModel+"["+pos+"]" )
           .attr('slot-trigger','slotTrigger')
+          .attr('slot-locked','auction.isLocked()')
           .each( -> $compile(this)(scope) )
         bars
           .classed('active', (d) -> d.active)

@@ -89,14 +89,6 @@ global.CampaignCtrl = ($scope, $window, UserManager, CampaignManager, AuctionMan
     d.then (campaigns) ->
       $scope.campaigns = campaigns
 
-  # campaigns can be opened/created and deleted
-
-
-global.CampaignViewCtrl = ($scope, UserManager, CampaignManager, AuctionManager) ->
-  return
-
-loadCampaignAuction = ($q, auction_id, user_id) ->
-
 global.CampaignDetailCtrl = ($scope, $routeParams, $log, $location, $window, UserManager, CampaignLoader, CampaignManager, AuctionManager) ->
   d = UserManager.check()
   d.success (user_id) ->
@@ -181,8 +173,8 @@ global.CampaignDetailTargetTweakCtrl = ($scope, $routeParams, $log, $location, $
           $scope.reach_active = null
         else
           $scope.campaign.updateReaches newValue.content.slot_reaches
-  
-
+    
+    $scope.slotTrigger = true
 
 
 # HelpCtrl.$inject = ['$scope', '$location']

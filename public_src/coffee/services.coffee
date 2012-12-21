@@ -116,7 +116,6 @@ module.factory 'AuctionManager', ['$http', '$q', '$log', ($http, $q, $log) ->
   class Auction
     constructor: (@id) ->
     isLocked: ->
-      # return true
       return @deadline < new Date()
   Auction.prototype.__proto__ = mockAuction
 
