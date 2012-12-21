@@ -8,6 +8,9 @@ module = angular.module('tvAuction.graphs' , [])
 # the daily and hourly restrictions
 module.directive 'timerestrictions', ['$parse', '$compile', ($parse, $compile) ->
   directive =
+    scope:
+      entries: '='
+      locked: '='
     replace: true
     compile: (tElm, tAttr, transclude) ->
       horiz = ((if 0==i%2 then i else '') for i in [0...24])
@@ -83,8 +86,6 @@ module.directive 'timerestrictions', ['$parse', '$compile', ($parse, $compile) -
           .text(String)
 
       return (scope, elm, attr, ctrl) ->
-        ngModel = $parse attr.ngModel
-
         brushstart = ->
         brushmove = ->
           brush_dims = d3.event.target.extent()
@@ -103,23 +104,27 @@ module.directive 'timerestrictions', ['$parse', '$compile', ($parse, $compile) -
         brushend = ->
           fields = chart.selectAll('rect.field')
           selected = fields.filter('.inselection')
+          brush.clear()
+          graph.call(brush)
+
+          return if scope.locked
           restricted =  selected.filter('.restricted')
           inactive =  selected.filter(':not(.restricted)')
           restricted.classed('restricted', false)
           inactive.classed('restricted', true)
           selected.classed('inselection', false)
-          brush.clear()
-          graph.call(brush)
           
           restrictedEntries = _.map fields.filter('.restricted').data(), (d) ->
             d[0...2]
-          ngModel.assign scope, restrictedEntries
+
+          scope.entries = restrictedEntries
           scope.$digest()
 
         clearselection = ->
+          return if scope.locked
           fields = chart.selectAll('rect.field')
           fields.classed('restricted', false)
-          ngModel.assign scope, []
+          scope.entries = []
           scope.$digest()
 
           
@@ -143,7 +148,7 @@ module.directive 'timerestrictions', ['$parse', '$compile', ($parse, $compile) -
           .text('Reset')
           .on('click', clearselection)
 
-        scope.$watch ngModel, (newValue, oldValue) ->
+        scope.$watch 'entries', (newValue, oldValue) ->
           return unless newValue
           drawCalendar(newValue, scope)
         , true

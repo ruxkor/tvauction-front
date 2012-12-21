@@ -107,7 +107,7 @@ div(ng-show="campaign.content.restrictions.timeframe.active")
       h4 Restrict days and times
   .row
     .span9
-      .timerestrictions(timerestrictions, ng-model="campaign.content.restrictions.timeframe.entries")
+      .timerestrictions(timerestrictions, entries="campaign.content.restrictions.timeframe.entries", locked="auction.isLocked()")
 
 
 .row

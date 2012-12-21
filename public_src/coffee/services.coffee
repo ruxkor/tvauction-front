@@ -120,12 +120,15 @@ module.factory 'AuctionManager', ['$http', '$q', '$log', ($http, $q, $log) ->
   Auction.prototype.__proto__ = mockAuction
 
   $log.log 'initializing AuctionManager'
-  _cache = window._auctionCache = {}
+  _cache = {}
   return {
     list: ->
       d = $q.defer()
       req = $http.get '/auction'
       req.success (res) ->
+        _.each res, (row) ->
+          _.each ['from','to','deadline'], (what) ->
+            row[what] = new Date(row[what])
         d.resolve res
       req.error (res, status) ->
         $log.log status, res
@@ -141,6 +144,8 @@ module.factory 'AuctionManager', ['$http', '$q', '$log', ($http, $q, $log) ->
         req = $http.get "/auction/#{auction_id}"
         req.success (res) ->
           # create and extend auction object
+          _.each ['from','to','deadline'], (what) ->
+            res.auction[what] = new Date(res.auction[what])
           auction = new Auction()
           _.extend auction, res.auction
           auction.content = JSON.parse auction.content
@@ -255,7 +260,7 @@ module.factory 'CampaignManager', ['AuctionManager', 'UuidManager', '$http', '$q
           campaign = new Campaign auction_id
           _.extend campaign, res
 
-          _cache[auction_id] = res if use_cache != false
+          _cache[auction_id] = campaign if use_cache != false
           d.resolve campaign
         req.error (res, status) ->
           $log.log status, res if status != 404
@@ -294,19 +299,19 @@ module.factory 'CampaignLoader', ['$q','$log','AuctionManager','CampaignManager'
       d = $q.defer()
       req = AuctionManager.get auction_id
       req.then (res) ->
-        $log.log 'auction loaded'
         auction = res.auction
         reaches = res.reaches
         req = CampaignManager.get auction_id, user_id
         req.then(
           (res) ->
-            $log.log 'campaign loaded'
             campaign = res
+            console.info [campaign, auction, reaches]
             d.resolve [campaign, auction, reaches]
           , ->
             $log.log 'creating new campaign object'
             campaign = CampaignManager.create auction_id
             campaign.buildSlots auction.content.slots
+            console.info [campaign, auction, reaches]
             d.resolve [campaign, auction, reaches]
         )
         return d.promise      

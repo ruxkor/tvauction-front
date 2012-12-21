@@ -49,20 +49,19 @@ global.UserLogoutCtrl = ($scope, $location, UserManager) ->
 
 
 global.AuctionCtrl = ($scope, $window, UserManager, AuctionManager) ->
-  $window.onbeforeunload = null
-
   d = UserManager.check()
   d.success (user_id) ->
     if not user_id
       $location.path '/user/login'
       return
+
+    $scope.now = new Date()
+
     d = AuctionManager.list()
     d.then (auctions) ->
       $scope.auctions = auctions
 
 global.AuctionViewCtrl = ($scope, $routeParams, $window, UserManager, AuctionManager) ->
-  $window.onbeforeunload = null
-
   d = UserManager.check()
   d.success (user_id) ->
     if not user_id
@@ -118,11 +117,13 @@ global.CampaignDetailCtrl = ($scope, $routeParams, $log, $location, $window, Use
   $scope.publishCampaign = ->
     campaign_reduced = _.pick $scope.campaign, ['id', 'auction_id', 'user_id']
     campaign_reduced.published = 1
+    d = CampaignManager.save campaign_reduced
     d.then (res) -> $scope.campaign.published = 1
 
   $scope.unpublishCampaign = ->    
     campaign_reduced = _.pick $scope.campaign, ['id', 'auction_id', 'user_id']
     campaign_reduced.published = 0
+    d = CampaignManager.save campaign_reduced
     d.then (res) -> $scope.campaign.published = 0
 
   $scope.deleteCampaign = ->
