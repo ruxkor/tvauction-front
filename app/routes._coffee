@@ -1,4 +1,5 @@
 'use strict'
+
 __ = require 'underscore'
 bcrypt = require 'bcrypt'
 

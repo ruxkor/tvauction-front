@@ -76,6 +76,7 @@ DELETE  /thing/:thing       ->  destroy
 # routes
 db = require('./app/database')(config)
 routes = require('./app/routes')(config, db)
+middleware = require('./app/middleware').init(config, db)
 
 # guarantee integer values and throw an error if they are not set
 for valName in ['auction_id']

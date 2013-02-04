@@ -116,18 +116,16 @@ module.directive 'timerestrictions', ['$parse', '$compile', ($parse, $compile) -
           
           restrictedEntries = _.map fields.filter('.restricted').data(), (d) ->
             d[0...2]
-
           scope.entries = restrictedEntries
-          scope.$digest()
+          scope.$apply()
 
         clearselection = ->
           return if scope.locked
           fields = chart.selectAll('rect.field')
           fields.classed('restricted', false)
           scope.entries = []
-          scope.$digest()
+          scope.$apply()
 
-          
         graph
         .append('g')
         .attr('class','brush')
@@ -152,9 +150,6 @@ module.directive 'timerestrictions', ['$parse', '$compile', ($parse, $compile) -
           return unless newValue
           drawCalendar(newValue, scope)
         , true
-
-
-
 
   return directive
 ]

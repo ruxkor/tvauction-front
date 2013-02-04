@@ -205,16 +205,16 @@ module.factory 'CampaignManager', ['AuctionManager', 'UuidManager', '$http', '$q
       for slot,i in @content.slots
         slot.target = reaches[i]
     applyTimeRestrictions: (chain) ->
-      restrictions = if ~~@restrictions.timeframe.active then @restrictions.timeframe.entries else false
+      restrictions = if ~~@content.restrictions.timeframe.active then @content.restrictions.timeframe.entries else false
       for slot in @content.slots
         continue if chain and not slot.active
         slot.active = restrictions == false or not _.find restrictions, (restriction) ->
           restriction[0] == slot.date.getHours() and restriction[1] == slot.date.getDay()
     applyCategoryRestrictions: (chain) ->
-      restrictions = if ~~@restrictions.auction.active==1 then @restrictions.auction.categories else false
+      restrictions = if ~~@content.restrictions.auction.active==1 then @content.restrictions.auction.categories else false
       for slot in @content.slots
         continue if chain and not slot.active
-        slot.active = restrictions == false or _.find restrictions, (restriction) ->
+        slot.active = restrictions == false or !!_.find restrictions, (restriction) ->
           restriction in slot.categories
     applyRestrictions: ->
       @applyTimeRestrictions false
@@ -235,7 +235,6 @@ module.factory 'CampaignManager', ['AuctionManager', 'UuidManager', '$http', '$q
       d = $q.defer()
       req = $http.get 'campaign', params
       req.success (res) ->
-        console.info res
         for row in res
           campaign = new Campaign()
           _.extend campaign, row
@@ -305,13 +304,11 @@ module.factory 'CampaignLoader', ['$q','$log','AuctionManager','CampaignManager'
         req.then(
           (res) ->
             campaign = res
-            console.info [campaign, auction, reaches]
             d.resolve [campaign, auction, reaches]
           , ->
             $log.log 'creating new campaign object'
             campaign = CampaignManager.create auction_id
             campaign.buildSlots auction.content.slots
-            console.info [campaign, auction, reaches]
             d.resolve [campaign, auction, reaches]
         )
         return d.promise      

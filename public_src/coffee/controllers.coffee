@@ -105,7 +105,7 @@ global.CampaignDetailCtrl = ($scope, $routeParams, $log, $location, $window, Use
   $scope.getActiveSlots = ->
     if $scope.campaign then _.filter $scope.campaign.content.slots, (slot) -> slot.active or slot.forced else []
 
-  $scope.$watch 'campaign.restrictions', (newValue, oldValue) ->
+  $scope.$watch 'campaign.content.restrictions', (newValue, oldValue) ->
     $scope.campaign.applyRestrictions() if $scope.campaign
   , true
 

@@ -16,6 +16,8 @@
 	, "coffee-script": "*"
 	, "jade": "*"
 	, "optimist": "*"
+	, "coffee-script": "*"
+	, "zmq": "*"
   },
   "devDependencies": {
       "nodemon": "*"
