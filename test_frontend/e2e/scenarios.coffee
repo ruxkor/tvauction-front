@@ -23,4 +23,4 @@ describe 'tvAuction app', ->
       input('user.email').enter('test@test.com')
       input('user.password').enter('test')
       element('#user-login-form :button').click()
-      expect(browser().location().url()).toBe('/main')
+      expect(browser().location().url()).toBe('/auction')

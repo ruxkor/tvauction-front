@@ -2,8 +2,9 @@
 
 BASE_DIR=`dirname $0`
 
-java -jar "$BASE_DIR/../test_frontend/lib/jstestdriver/JsTestDriver.jar" \
-     --config "$BASE_DIR/../config/jsTestDriver.conf" \
-     --basePath "$BASE_DIR/.." \
-     --tests all \
-     --captureConsole
+echo ""
+echo "Starting Testacular Server (http://vojtajina.github.com/testacular)"
+echo "-------------------------------------------------------------------"
+
+export CHROME_BIN=$(which chromium-browser)
+testacular start $BASE_DIR/../config/testacular.conf.js $*
