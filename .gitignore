@@ -15,3 +15,6 @@ public/partials/*.html
 # compiled js files
 test_frontend/e2e/*.js
 test_frontend/unit/*.js
+
+# node modules
+node_modules
