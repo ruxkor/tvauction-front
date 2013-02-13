@@ -18,7 +18,7 @@ module.exports = (config, db) ->
     # route for the user login.
     # compares the email and the bcrypted password hash
     # if successful, the user_id is returned and the session authenticated
-    login: (req, res) -> ( (_) ->
+    login: (req, res, next, _) -> 
       email = req.body.email
       password = req.body.password
       session = req.session
@@ -33,7 +33,6 @@ module.exports = (config, db) ->
             session.auth = true
 
       res.end ''+session.user_id
-    )(handleError)
 
 
     # logs the user out by deleting his session
@@ -53,7 +52,7 @@ module.exports = (config, db) ->
   # auction routes
   auction:
     # get all available auctions
-    index: (req, res) -> ( (_) ->
+    index: (req, res, next, _) ->
       stmt = ''' 
         SELECT auction.id, auction.from, auction.to, auction.deadline, campaign.id as campaign_id
         FROM auction 
@@ -62,11 +61,10 @@ module.exports = (config, db) ->
         ORDER BY auction.from'''
       rows = db.query stmt, [req.session.user_id], _
       res.end JSON.stringify(rows)
-    )(handleError)
 
 
     # gets a specific auction
-    show: (req, res) -> ( (_) ->
+    show: (req, res, next, _) ->
       auction_id = req.params.auction_id
       rows = db.query 'SELECT * from auction WHERE id=?', [auction_id], _
       if not rows.length
@@ -79,13 +77,12 @@ module.exports = (config, db) ->
           auction: auction
           reaches: reaches
         )
-    )(handleError)
 
 
   # campaign routes
   campaign:
     # lists all campaigns for a user
-    index: (req, res) -> ( (_) ->
+    index: (req, res, next, _) ->
       stmt = '''SELECT 
                   campaign.id, campaign.auction_id, campaign.published, campaign.modified, 
                   auction.from auction_from, auction.to auction_to, auction.deadline auction_deadline
@@ -95,12 +92,11 @@ module.exports = (config, db) ->
                 ORDER BY auction.from, auction.deadline'''
       rows = db.query stmt, [req.session.user_id], _
       res.end JSON.stringify(rows)
-    )(handleError)
 
 
     # gets a specific campaign
     # a user can only get his own campaigns
-    show: (req, res) -> ( (_) ->
+    show: (req, res, next, _) ->
       auction_id = req.params.auction_id
       rows = db.query 'SELECT * from campaign WHERE auction_id=? and user_id=?', [auction_id, req.session.user_id], _
       if not rows.length
@@ -109,11 +105,10 @@ module.exports = (config, db) ->
       else
         campaign = rows[0]
         res.end JSON.stringify(campaign)
-    )(handleError)
 
 
     # create a campaign
-    create: (req, res) -> ( (_) ->
+    create: (req, res, next, _) ->
       auction_id = req.params.auction_id
       if not auctionIsExistingAndBeforeDeadline auction_id, _
         res.writeHead 403
@@ -133,11 +128,9 @@ module.exports = (config, db) ->
       rows = db.query 'INSERT INTO campaign SET ?', params, _
       res.end ''+rows.insertId
 
-    )(handleError)
-
 
     # update a campaign
-    update: (req, res) -> ( (_) ->
+    update: (req, res, next, _) ->
       auction_id = req.params.auction_id
       if not auctionIsExistingAndBeforeDeadline auction_id, _
         res.writeHead 403
@@ -163,11 +156,10 @@ module.exports = (config, db) ->
       else
         res.writeHead 500
         res.end()
-    )(handleError)
 
 
     # delete a campaign. the campaign 
-    delete: (req, res) -> ( (_) ->
+    delete: (req, res, next, _) ->
       auction_id = req.params.auction_id
       if not auctionIsExistingAndBeforeDeadline auction_id, _
         res.writeHead 403
@@ -177,4 +169,3 @@ module.exports = (config, db) ->
       params = [auction_id, req.session.user_id]
       rows = db.query 'DELETE FROM campaign WHERE auction_id=? AND user_id=?', params, _
       res.end ''+rows.affectedRows
-    )(handleError)

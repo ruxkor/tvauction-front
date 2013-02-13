@@ -24,6 +24,7 @@ describe '/user/login', (_) ->
     routes = routesFn {}, db
     req = {session: {}}
     res = new MockResponse()
+    next = (-> )
 
   afterEach ->
     db_mock.verify()
@@ -35,6 +36,7 @@ describe '/user/login', (_) ->
     req.body =
       email: 'test@test.com'
       password: 'test'
+
     routes.user.login(req, res, next, _)
     res.data.should.eql '999'
 

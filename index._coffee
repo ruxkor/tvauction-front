@@ -78,11 +78,14 @@ db = require('./app/database')(config)
 routes = require('./app/routes')(config, db)
 middleware = require('./app/middleware').init(config, db)
 
+debugger
+
 # guarantee integer values and throw an error if they are not set
 for valName in ['auction_id']
   app.param valName, checkIntValue(valName)
 
-app.all '/user/login', routes.user.login
+app.get '/user/login', routes.user.login
+app.post '/user/login', routes.user.login
 app.get '/user/logout', routes.user.logout
 app.get '/user/check', routes.user.check
 

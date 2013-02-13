@@ -23,7 +23,7 @@ describe 'AuctionModel', ->
       res.should.eql 1
       db_mock.verify()
 
-    it 'should not change status if not matching', (_) ->
+    it 'should be falsy if status is not matching', (_) ->
       db_mock = sinon.mock(db)
       db_mock.expects('query').once().yields(null, {changedRows: 0})
       res = am.changeStatus 0, 'state_a', 'state_b', _
