@@ -1,0 +1,13 @@
+{
+    "db": {
+        "host": "localhost"
+      , "port": 3306
+      , "user": "root"
+      , "password": "holahola"
+      , "database": "tvauction"
+    }
+  , "middleware": {
+        "pub": "tcp://127.0.0.1:10234"
+      , "rr": "tcp://127.0.0.1:10235"
+    }
+}
