@@ -11,9 +11,11 @@ form
       td: ul
         li(ng-repeat="category in slot.categories") {{category}}
     tr
-      th(colspan="2") Price
+      th Price
+      th Length
     tr
-      td(colspan="2") {{slot.price*30 | number:2}} &euro; / 30s
+      td {{slot.price*30 | number:2}} &euro; / 30s
+      td {{slot.duration}}s
     tr
       th(colspan="2") Target
     tr

@@ -1,0 +1,44 @@
+h1 Campaign - Results
+h2
+  | Bids
+  span.info Information about submitted and won bids
+
+.row
+  .span6
+    table.table.table-condensed
+      thead
+        tr
+          th #
+          th won
+          th maximum budget
+          th price
+          th target quantity
+      tbody
+        tr(ng-repeat="target in campaign.content.targets")
+          td {{$index+1}}
+          td {{$index==result.bid | oknotok}}
+          td {{target.budget}}
+          td
+            span(ng-show="$index==result.bid"): {{result.price}}
+          td {{target.quantity}}
+
+h2
+  | Airings
+  span.info Information when your advert will be aired
+
+.row
+  .span9(ng-show="result.slots.length")
+    table.table.table-condensed
+      thead
+        th #
+        th air time
+        th target quantity
+        th categories
+      tbody
+        tr(ng-repeat="slot in getWinningSlots()")
+          td {{slot.id}}
+          td {{slot.date | date:"medium"}}
+          td {{slot.target}}
+          td {{slot.categories | join}}
+  .span9(ng-show="!result.slots.length") 
+    | We are sorry to inform you that none of your submitted bids has won.

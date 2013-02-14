@@ -42,7 +42,7 @@ describe 'AuctionModel', ->
       am_mock = sinon.mock am
       db_mock
         .expects('query').once()
-        .withArgs(AuctionModel.get_and_look_query)
+        .withArgs(AuctionModel.get_and_lock_query)
         .yields(null, [{id:1}])
       am_mock
         .expects('changeStatus').once()
@@ -59,7 +59,7 @@ describe 'AuctionModel', ->
       am_mock = sinon.mock am
       db_mock
         .expects('query').once()
-        .withArgs(AuctionModel.get_and_look_query)
+        .withArgs(AuctionModel.get_and_lock_query)
         .yields(null, [{id:1}, {id: 2}])
       am_mock
         .expects('changeStatus').once()
@@ -74,6 +74,10 @@ describe 'AuctionModel', ->
       auction_data.id.should.be.eql 2
       db_mock.verify()
       am_mock.verify()
+
+describe 'Middleware', ->
+  
+
 
 
 

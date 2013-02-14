@@ -8,6 +8,7 @@ h2
 table.table.table-bordered
   tr
     th id
+    th status
     th deadline
     th from
     th to
@@ -16,6 +17,7 @@ table.table.table-bordered
   tr(ng-repeat="auction in auctions")
     td
       a(ng-href="#/auction/{{auction.id}}") auction {{auction.id}}
+    td {{auction.state}}
     td {{auction.deadline | date}}
     td {{auction.from | date}}
     td {{auction.to | date}}

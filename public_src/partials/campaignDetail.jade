@@ -1,4 +1,4 @@
-h1 Create Campaign
+h1 Edit Campaign
 h2
   | General
   span.info General Settings
@@ -141,6 +141,9 @@ h2
 
 .row
   .span9(style="text-align:right;")
+    a.btn.btn-large.btn-info(ng-show="campaign.id && campaign.published == 1 && auction.state=='solved'", ng-href="#/result/{{auction.id}}")
+      i.icon-certificate.icon-white
+      |  Results
     button.btn.btn-large.btn-success(ng-show="campaign.id && campaign.published == 0", ng-click="publishCampaign()", ng-disabled="auction.isLocked()")
       i.icon-upload
       |  Publish

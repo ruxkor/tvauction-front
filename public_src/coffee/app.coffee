@@ -40,6 +40,9 @@ angular
     $routeProvider.when '/campaign/targetTweak/:auction_id',
       templateUrl: 'partials/campaignDetailTargetTweak.html'
       controller: CampaignDetailTargetTweakCtrl
+    $routeProvider.when '/result/:auction_id',
+      templateUrl: 'partials/result.html'
+      controller: ResultCtrl
 
     $routeProvider.otherwise {redirectTo: '/'}
   ]

@@ -89,18 +89,23 @@ global.CampaignCtrl = ($scope, $window, UserManager, CampaignManager, AuctionMan
       $scope.campaigns = campaigns
 
 global.CampaignDetailCtrl = ($scope, $routeParams, $log, $location, $window, UserManager, CampaignLoader, CampaignManager, AuctionManager) ->
+
+  loadCampaign = (auction_id) ->
+    d = CampaignLoader.get auction_id
+    d.then (res) -> 
+      [$scope.campaign, $scope.auction, $scope.reaches] = res
+
   d = UserManager.check()
   d.success (user_id) ->
     if not user_id
       $location.path '/'
       return
 
-    # $window.onbeforeunload = -> 'All entered data will be lost if you did not save your data.'
-    auction_id = ~~$routeParams.auction_id
+    auction_id = ~~$routeParams.auction_id  
 
-    d = CampaignLoader.get auction_id, user_id
-    d.then (res) -> 
-      [$scope.campaign, $scope.auction, $scope.reaches] = res
+    # $window.onbeforeunload = -> 'All entered data will be lost if you did not save your data.'
+
+    loadCampaign auction_id
 
   $scope.getActiveSlots = ->
     if $scope.campaign then _.filter $scope.campaign.content.slots, (slot) -> slot.active or slot.forced else []
@@ -131,7 +136,7 @@ global.CampaignDetailCtrl = ($scope, $routeParams, $log, $location, $window, Use
     d = CampaignManager.delete auction_id
     d.then (res) ->
       $log.log 'successfully deleted'
-      $scope.campaign = CampaignManager.create auction_id
+      loadCampaign auction_id
 
   
   $scope.incrementTarget = ->
@@ -150,7 +155,7 @@ global.CampaignDetailCalendarCtrl = ($scope, $routeParams, $log, $location, $win
     # $window.onbeforeunload = -> 'All entered data will be lost if you did not save your data.'
     auction_id = ~~$routeParams.auction_id
 
-    d = CampaignLoader.get auction_id, user_id
+    d = CampaignLoader.get auction_id
     d.then (res) -> [$scope.campaign, $scope.auction, $scope.reaches] = res
 
 
@@ -164,7 +169,7 @@ global.CampaignDetailTargetTweakCtrl = ($scope, $routeParams, $log, $location, $
     # $window.onbeforeunload = -> 'All entered data will be lost if you did not save your data.'
     auction_id = ~~$routeParams.auction_id
 
-    d = CampaignLoader.get auction_id, user_id
+    d = CampaignLoader.get auction_id
     d.then (res) -> 
       [$scope.campaign, $scope.auction, $scope.reaches] = res
 
@@ -177,7 +182,28 @@ global.CampaignDetailTargetTweakCtrl = ($scope, $routeParams, $log, $location, $
     
     $scope.slotTrigger = true
 
+global.ResultCtrl = ($scope, $routeParams, $log, $location, $window, UserManager, ResultManager, CampaignLoader) ->
+  d = UserManager.check()
+  d.success (user_id) ->
+    if not user_id
+      $location.path '/user/login'
+      return
+    auction_id = ~~$routeParams.auction_id
 
+    d = CampaignLoader.get auction_id
+    d.then (res) -> 
+      [$scope.campaign, $scope.auction, $scope.reaches] = res
+
+    d = ResultManager.get auction_id, user_id
+    d.then (res) -> 
+      $scope.result = res
+    
+  $scope.getWinningSlots = ->
+    return unless $scope.campaign and $scope.result
+    slots = {}
+    for slot in $scope.campaign.content.slots
+      slots[slot.id] = slot if slot.id in $scope.result.slots
+    return slots
 # HelpCtrl.$inject = ['$scope', '$location']
 # UserLoginCtrl.$inject = ['$scope', '$location', 'CacheManager', 'UserManager']
 # UserLogoutCtrl.$inject = ['$scope', '$location', 'UserManager']

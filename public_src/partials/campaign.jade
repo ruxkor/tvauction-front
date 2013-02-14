@@ -8,16 +8,16 @@ h2
 table.table.table-bordered
   tr
     th id
-    th auction
     th published
     th deadline
     th timeframe
+    th result
 
   tr(ng-repeat="campaign in campaigns")
     td
-      a(ng-href="#/campaign/edit/{{campaign.auction_id}}") campaign {{campaign.id}}
-    td
-      a(ng-href="#/auction/{{campaign.auction_id}}") auction {{campaign.auction_id}}
+      a(ng-href="#/campaign/edit/{{campaign.auction_id}}") campaign {{campaign.auction_id}}
     td {{campaign.published | yesno}}
     td {{campaign.auction_deadline | date}}
     td {{campaign.auction_from | date}} - {{campaign.auction_to | date}}
+    td 
+      a(ng-show="campaign.published && campaign.auction_state=='solved'", ng-href="#/result/{{campaign.auction_id}}") show

@@ -54,7 +54,7 @@ module.exports = (config, db) ->
     # get all available auctions
     index: (req, res, next, _) ->
       stmt = ''' 
-        SELECT auction.id, auction.from, auction.to, auction.deadline, campaign.id as campaign_id
+        SELECT auction.id, auction.state, auction.from, auction.to, auction.deadline, campaign.id as campaign_id
         FROM auction 
         LEFT JOIN campaign ON (campaign.auction_id=auction.id AND campaign.user_id=?)
         WHERE campaign.id IS NOT NULL OR auction.deadline > NOW()
@@ -78,14 +78,13 @@ module.exports = (config, db) ->
           reaches: reaches
         )
 
-
   # campaign routes
   campaign:
     # lists all campaigns for a user
     index: (req, res, next, _) ->
       stmt = '''SELECT 
                   campaign.id, campaign.auction_id, campaign.published, campaign.modified, 
-                  auction.from auction_from, auction.to auction_to, auction.deadline auction_deadline
+                  auction.state auction_state, auction.from auction_from, auction.to auction_to, auction.deadline auction_deadline
                 FROM campaign
                 JOIN auction ON (auction.id=campaign.auction_id)
                 WHERE campaign.user_id=?
@@ -169,3 +168,31 @@ module.exports = (config, db) ->
       params = [auction_id, req.session.user_id]
       rows = db.query 'DELETE FROM campaign WHERE auction_id=? AND user_id=?', params, _
       res.end ''+rows.affectedRows
+
+  # result routes
+  result:
+    show: (req, res, next, _) ->
+      user_id = req.session.user_id
+      auction_id = req.params.auction_id
+      stmt = '''SELECT result.content FROM result
+                JOIN campaign on (campaign.auction_id=result.auction_id)
+                WHERE campaign.auction_id=? AND campaign.user_id=?
+             '''
+      rows = db.query stmt, [auction_id, user_id], _
+      
+      if not rows.length
+        res.writeHead 404
+        res.end()
+      else
+        result_data = JSON.parse rows[0].content
+        console.info result_data
+        winning_bid = result_data.winners
+          .filter((b) -> b[0]==user_id)
+          .map((b) -> b[1])[0]
+        price_bid = result_data.prices_bid[user_id]
+        price_final = result_data.prices_final[user_id]
+        result =
+          bid: if winning_bid != undefined then winning_bid else null
+          price: price_final
+          slots: if user_id of result_data.winners_slots then result_data.winners_slots[user_id] else []
+        res.end JSON.stringify result

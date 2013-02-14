@@ -4,13 +4,19 @@
 __ = require 'underscore'
 zmq = require 'zmq'
 
+debug = require('debug')('tvauction:middleware')
+
+MAX_DELAY = Math.pow(2,31)-1
 
 class AuctionModel
-  @get_and_look_query = 'SELECT id, state, `from`, to FROM auction WHERE state = "searching" ORDER BY deadline'
+  
+  @get_and_lock_query = 'SELECT id, state, `from`, `to`, content FROM auction WHERE state = "searching" ORDER BY deadline'
   @change_status_query = 'UPDATE auction SET state = ? WHERE state = ? AND id = ?'
+
   constructor: (@db) ->
+
   getAndLock: (_) ->
-    auctions_data = @db.query AuctionModel.get_and_look_query, _
+    auctions_data = @db.query AuctionModel.get_and_lock_query, _
     # if there is no auction that needs solving return
     return null unless auctions_data.length
     for auction_data in auctions_data
@@ -18,87 +24,142 @@ class AuctionModel
       return auction_data if changed # only return the auction if we could change state
     return null
 
+  getAll: (_) ->
+    auctions = @db.query 'SELECT id, state, deadline FROM auction WHERE state IN ("open","searching")', _
+    return auctions
+
   getOptions: (id) ->
     # TODO implement custom settings or at least db-bound settings
-    return {}
+    options =
+      timeLimit: 20
+      timeLimitGwd: 20
+    return options
 
   changeStatus: (id, from, to, _) ->
-    res = @db.query AuctionModel.change_status_query, [from, to, id], _
+    debug 'changeStatus - id: %d, from: %s, to: %s', id, from, to
+    res = @db.query AuctionModel.change_status_query, [to, from, id], _
     return res.changedRows
     
-  saveResult: (id, data, _) ->
-    @db.query 'INSERT INTO auction_data (auction_id, content) VALUES (?,?)', [id, data], _
+  saveResult: (id, result, _) ->
+    debug 'saveResult - id: %d', id
+    revenue = (v for k,v of result.prices_final).reduce(((a,b) -> a+b),0)
+    rows = @db.query 'INSERT IGNORE INTO result (auction_id, revenue, content) VALUES (?,?,?)', [id, revenue, JSON.stringify(result)], _
     return rows.length
 
   transform: (auction_data) ->
+    debug 'transform - auction_id: %d', auction_data.id
     # Slot = namedtuple('Slot', ('id','price','length'))
-    slots = []
+    slots = {}
     auction_content = JSON.parse auction_data.content
     for slot_data in auction_content.slots
-      slot = [slot_data.id, slot_data.price, slot_data.duration]
-      slots.push slot
+      slots[slot_data.id] = 
+        id: slot_data.id
+        price: slot_data.price
+        length: slot_data.duration
     return slots
 
 
 class CampaignModel
+  @get_published_query = 'SELECT * from campaign WHERE auction_id = ? AND published = 1'
+
   constructor: (@db) ->
+
   getAll: (auction_id, _) ->
-    campaigns_data = @db.query 'SELECT * from campaign WHERE auction_id = ? AND published = 1', [auction_id], _
+    debug 'getAll - auction_id: %d', auction_id
+    campaigns_data = @db.query CampaignModel.get_published_query, [auction_id], _
     return campaigns_data
 
   transformSingle: (campaign_data) ->
     # BidderInfo = namedtuple('BidderInfo', ('id','length','bids','attrib_values'))
     # bids: [price, min_attrib], attrib_values = {slot_id: value}
-    campaign_content = JSON.parse campaign.content
-    bidder_info = [
-      campaign_data.user_id
-      campaign_content.advert.duration
-      [bid.target, bid.quantity] for bid in campaign_content.targets
-    ]
+    debug 'transform single'
+    campaign_content = JSON.parse campaign_data.content
     attrib_values = {}
     for slot in campaign_content.slots
-      attrib_values[slot.id] = qty if slot.active || slot.forced
-    bidder_info.push attrib_values
+      attrib_values[slot.id] = slot.target if (slot.active or slot.forced)
+    bidder_info =
+      id: campaign_data.user_id
+      length: campaign_content.advert.duration
+      bids: [bid.budget, bid.quantity] for bid in campaign_content.targets
+      attrib_values: attrib_values
     return bidder_info
 
   transform: (campaigns_data) ->
-    bidder_infos = []
+    debug 'transform campaigns'
+    bidder_infos = {}
     for campaign_data in campaigns_data
-      bidder_infos.push @transformSingle(campaign_data)
+      bidder_infos[campaign_data.user_id] = @transformSingle(campaign_data)
     return bidder_infos
 
 class Middleware
+  @refresh_delay = 60000
+
   constructor: (@auction_m, @campaign_m, @socket_pub, @socket_rr) ->
+    that = @
+    @auction_timers = {}
+
     # bind onMessage method to the req/rep socket
-    @socket_rr.on 'message', @onMessage
+    @socket_rr.on 'message', (data, _) -> that.handleMessage(data,_)
 
-  onMessage: (data, _) ->
-    [action, error, auction_id, params...] = JSON.parse data
-
+  handleMessage: (data, _) ->
+    [action, error, param, params...] = JSON.parse data
+    debug 'handleMessage - action: %s, param: %d, error: %s', action, param, error
+    response = ''
     if error and action == 'solve'
       #put auction status on searching again
-      @auction_m.changeStatus auction_id, 'solving', 'searching', _
+      @auction_m.changeStatus param, 'solving', 'searching', _
 
-    if error
-      console.error "Error: #{action} (#{params}) - #{error}" # FIXME logging
-      return
+    else if error
+      # TODO better logging
+      console.error "Error: #{action} (#{params}) - #{error}"
 
-    if action == 'is_free' and auction_id
-      auction_data = @auction_m.getAndLock _
-      if not auction_data
-        socket_rr.send()
-      else
-        options = @auction_m.getOptions auction_id
-        campaign_data = @campaign_m.getAll auction_id, _
-        slots = @auction_m.transform auction_data
-        bidder_infos = @campaign_m.transform campaign_data
-        scenario = [slots, bidder_infos]
-        socket_rr.send JSON.stringify(['solve', auction_id, scenario, options])
     else if action == 'solve'
-      @auction_m.changeStatus auction_id, 'solving', 'solved', _
-      @auction_m.saveResult auction_id, params, _
-      #put auction status on solved, save results
-      socket.send()
+      @auction_m.changeStatus param, 'solving', 'solved', _
+      @auction_m.saveResult param, params[0], _
+
+    else if action == 'is_free' and param
+      auction_data = @auction_m.getAndLock _
+      if auction_data
+        auction_id = auction_data.id
+        options = @auction_m.getOptions auction_id
+        campaigns_data = @campaign_m.getAll auction_id, _
+        slots = @auction_m.transform auction_data
+        bidder_infos = @campaign_m.transform campaigns_data
+        scenario = [slots, bidder_infos]
+        response = JSON.stringify ['solve', auction_id, scenario, options]
+    @socket_rr.send response
+
+  refresh: (_) ->
+    debug 'refreshing'
+    that = @
+
+    clearTimeout @refresh_timer
+
+    # get auctions from db and set up timers
+    for auction_id,auction_timer of @auction_timers
+      clearTimeout auction_timer
+
+    auctions = @auction_m.getAll _
+    now = new Date()
+    for auction in auctions
+      delay = auction.deadline-now
+      continue if delay > MAX_DELAY
+      @auction_timers[auction.id] = setTimeout(
+        (id, state, _) -> that.closeAuction(id, state, _),
+        delay, auction.id, auction.state
+      )
+
+    @refresh_timer = setTimeout(
+      (_) -> that.refresh(_)
+      Middleware.refresh_delay
+    )
+
+  closeAuction: (auction_id, auction_state, _) ->
+    debug 'closing auction %d', auction_id
+    @auction_m.changeStatus auction_id, 'open', 'searching', _ if auction_state == 'open'
+    @socket_pub.send JSON.stringify(['is_free'])
+
+
 
 exports.Middleware = Middleware
 exports.AuctionModel = AuctionModel

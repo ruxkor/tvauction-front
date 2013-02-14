@@ -221,8 +221,6 @@ module.factory 'CampaignManager', ['AuctionManager', 'UuidManager', '$http', '$q
       @applyCategoryRestrictions true
 
 
-  # Campaign.prototype.__proto__ = mockCampaign
-
   $log.log 'initializing CampaignManager'
   _cache = {}
   return {
@@ -284,10 +282,40 @@ module.factory 'CampaignManager', ['AuctionManager', 'UuidManager', '$http', '$q
       d = $q.defer()
       req = $http.delete "campaign/#{auction_id}"
       req.success (rows) ->
+        delete _cache[auction_id]
         d.resolve rows
       req.error (res, status) ->
         $log.log status, res
         d.reject res
+      return d.promise
+  }
+]
+
+module.factory 'ResultManager', ['UuidManager', '$http', '$q', '$log', (uuid, $http, $q, $log) ->
+  class Result
+    constructor: (@auction_id) ->
+      @bid = null
+      @price = 0
+      @slots = []
+
+  _cache = {}
+  return {
+    get: (auction_id, use_cache) ->
+      d = $q.defer()
+      if auction_id and use_cache != false and auction_id of _cache
+        $log.log 'loading result from cache:', auction_id
+        d.resolve _cache[auction_id]
+      else
+        $log.log 'loading result from server:', auction_id
+        req = $http.get "result/#{auction_id}"
+        req.success (res) ->
+          result = new Result auction_id
+          _.extend result, res
+          _cache[auction_id] = result if use_cache != false
+          d.resolve result
+        req.error (res, status) ->
+          $log.log status, res if status != 404
+          d.reject res
       return d.promise
   }
 ]

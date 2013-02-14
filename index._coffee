@@ -78,8 +78,6 @@ db = require('./app/database')(config)
 routes = require('./app/routes')(config, db)
 middleware = require('./app/middleware').init(config, db)
 
-debugger
-
 # guarantee integer values and throw an error if they are not set
 for valName in ['auction_id']
   app.param valName, checkIntValue(valName)
@@ -98,8 +96,15 @@ app.post '/campaign/:auction_id', routes.campaign.create
 app.put '/campaign/:auction_id', routes.campaign.update
 app.delete '/campaign/:auction_id', routes.campaign.delete
 
+app.get '/result/:auction_id', routes.result.show
 
-# create web server
-http.createServer(app).listen app.get('port'), ->
-  console.log 'Express server listening on port ' + app.get('port')
+app.get '/admin/refresh', (req,res,next,_) -> 
+  middleware.refresh(_)
+  res.end ''
 
+http.createServer(app).listen app.get('port'), _
+debug('http server online')
+
+
+setTimeout _, 1000
+middleware.refresh _
