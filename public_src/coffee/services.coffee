@@ -129,7 +129,7 @@ module.factory 'UserManager', ['$http','$q','$log','$location', ($http, $q, $log
       forward = (res) -> res
       redirect = (res) -> 
         $location.path '/user/login'
-        throw new Error 'not logged in'
+        $q.reject 'not logged in'
       d.then forward, redirect
       return d
   }

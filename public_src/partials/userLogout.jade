@@ -12,4 +12,7 @@ h2 Log out
 
 
 strong logging you out...
-|  you are currently being logged out
+span(ng-hide="notLoggedIn") you are currently being logged out
+
+span(ng-show="notLoggedIn") 
+  | you are already logged out.
