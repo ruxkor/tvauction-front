@@ -42,3 +42,19 @@ h2
           td {{slot.categories | join}}
   .span9(ng-show="!result.slots.length") 
     | We are sorry to inform you that none of your submitted bids has won.
+
+
+h2
+  | Actions
+  span.info You can save your changes after returning to your campaign.
+.row
+  .span9(style="text-align:right;")
+    a.btn.btn-large(ng-href="#/campaign/edit/{{auction.id}}")
+      i.icon-arrow-left
+      |  Campaign # {{auction.id}}
+    | &nbsp;
+    a.btn.btn-large(ng-href="#/campaign")
+      i.icon-arrow-up
+      |  Campaign List
+
+hr

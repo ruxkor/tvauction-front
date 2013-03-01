@@ -77,7 +77,3 @@ describe 'AuctionModel', ->
 
 describe 'Middleware', ->
   
-
-
-
-

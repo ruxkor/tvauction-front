@@ -7,9 +7,6 @@ angular
     $routeProvider.when '/',
       templateUrl: 'partials/index.html'
       controller: IndexCtrl
-    $routeProvider.when '/main',
-      templateUrl: 'partials/main.html'
-      controller: MainCtrl
     $routeProvider.when '/help',
       templateUrl: 'partials/help.html'
       controller: HelpCtrl

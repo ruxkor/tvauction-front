@@ -1,14 +1,26 @@
-h1 Create Campaign - Target
+h1 Edit Campaign - Target
 h2
   | Target values
   span.info Drag the slider in the lower area and change the value by clicking on the bars.
 
 .targettweaks(targettweaks,ng-model="campaign.content.slots")
 
-dl.dl-horizontal.pull-right
-  .form-horizontal
-    .control-group
-      label.control-label target audience
-      .controls
-        select(ng-change="confirmReachChange()", ng-model="reach_active", ng-options="v.name for v in reaches", ng-disabled="auction.isLocked()")
-            option(value="") custom
+.row
+  .span9(style="text-align:right;")
+    dl.dl-horizontal.pull-right
+      .form-horizontal
+        .control-group
+          label.control-label target audience
+          .controls
+            select(ng-change="confirmReachChange()", ng-model="reach_active", ng-options="v.name for v in reaches", ng-disabled="auction.isLocked()")
+              option(value="") custom
+
+h2
+  | Actions
+  span.info You can save your changes after returning to your campaign.
+.row
+  .span9(style="text-align:right;")
+    a.btn.btn-large(ng-href="#/campaign/edit/{{auction.id}}")
+      i.icon-arrow-left
+      |  Return To Campaign  
+hr            

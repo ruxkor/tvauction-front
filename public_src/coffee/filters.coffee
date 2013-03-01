@@ -13,7 +13,7 @@ module.filter 'yesno', ->
 
 module.filter 'oknotok', ->
 	return (input) ->
-		if input then '✔' else '-'
+		if input then '✔' else ' '
 
 module.filter 'join', ->
 	return (input) ->

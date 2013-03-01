@@ -4,69 +4,62 @@
 global = window if typeof global == 'undefined'
 
 
-global.IndexCtrl = ($scope, $location, CacheManager) ->
-  user_id = CacheManager.get 'user_id'
-  if user_id
-    $location.path '/main'
-    return
-
-global.MainCtrl = ($scope, $location, CacheManager) ->
-  user_id = CacheManager.get 'user_id'
-  if not user_id
-    $location.path '/user/login'
+global.IndexCtrl = ($scope, $location, UserManager) ->
+  d = UserManager.check()
+  d.then (user_id) ->
+    $location.path '/auction' if user_id
     return
 
 global.HelpCtrl = ($scope, $location) ->
-
+  
 
 global.UserLoginCtrl = ($scope, $location, CacheManager, UserManager) ->
-  $scope.$watch 'user', (newValue, oldValue) ->
-    $scope.credentialsInvalid = false unless angular.equals newValue, oldValue
-  , true
+  d = UserManager.checkRedirect(true)
+  d.then (user_id) ->
 
-  $scope.login = ->
-    d = UserManager.login $scope.user.email, $scope.user.password
-    d.success (res) ->
-      user_id = ~~res
-      if user_id > 0
-        CacheManager.set 'user_id', user_id
-        $location.path '/auction'
-      else
-        $scope.credentialsInvalid = true
+    $scope.$watch 'user', (newValue, oldValue) ->
+      $scope.credentialsInvalid = false unless angular.equals newValue, oldValue
+    , true
+
+    $scope.login = ->
+      d = UserManager.login $scope.user.email, $scope.user.password
+      d.then (res) ->
+        user_id = ~~res
+        if user_id > 0
+          CacheManager.set 'user_id', user_id
+          $location.path '/auction'
+        else
+          $scope.credentialsInvalid = true
 
 global.UserLogoutCtrl = ($scope, $location, UserManager) ->
-  $scope.successful = null
+  d = UserManager.checkRedirect()
+  d.then (user_id) ->
+  
+    $scope.successful = null
 
-  d = UserManager.logout()
-  d.then (res) ->
-    $scope.successful = true
-    setTimeout ->
-      $location.path '/'
-      $scope.$apply()
-    , 1000
-  , (res) ->
-    $scope.successful = false
+    d = UserManager.logout()
+    d.then (res) ->
+      $scope.successful = true
+      setTimeout ->
+        $location.path '/'
+        $scope.$apply()
+      , 1000
+    , (res) ->
+      $scope.successful = false
 
 
-global.AuctionCtrl = ($scope, $window, UserManager, AuctionManager) ->
-  d = UserManager.check()
-  d.success (user_id) ->
-    if not user_id
-      $location.path '/user/login'
-      return
-
+global.AuctionCtrl = ($scope, UserManager, AuctionManager) ->
+  d = UserManager.checkRedirect()
+  d.then (user_id) ->
+    
     $scope.now = new Date()
-
     d = AuctionManager.list()
     d.then (auctions) ->
       $scope.auctions = auctions
 
-global.AuctionViewCtrl = ($scope, $routeParams, $window, UserManager, AuctionManager) ->
-  d = UserManager.check()
-  d.success (user_id) ->
-    if not user_id
-      $location.path '/user/login'
-      return
+global.AuctionViewCtrl = ($scope, $routeParams, UserManager, AuctionManager) ->
+  d = UserManager.checkRedirect()
+  d.then (user_id) ->
 
     auction_id = ~~$routeParams.auction_id
     d = AuctionManager.get auction_id
@@ -76,35 +69,26 @@ global.AuctionViewCtrl = ($scope, $routeParams, $window, UserManager, AuctionMan
       $scope.reach_active = res.reaches[0]
 
 global.CampaignCtrl = ($scope, $window, UserManager, CampaignManager, AuctionManager) ->
-  d = UserManager.check()
-  d.success (user_id) ->
-    if not user_id
-      $location.path '/user/login'
-      return
+  d = UserManager.checkRedirect()
+  d.then (user_id) ->
 
     # $window.onbeforeunload = null
-
     d = CampaignManager.list()
     d.then (campaigns) ->
       $scope.campaigns = campaigns
 
-global.CampaignDetailCtrl = ($scope, $routeParams, $log, $location, $window, UserManager, CampaignLoader, CampaignManager, AuctionManager) ->
-
+global.CampaignDetailCtrl = ($scope, $routeParams, $log, $location, $window, $dialog, UserManager, CampaignLoader, CampaignManager, AuctionManager) ->
   loadCampaign = (auction_id) ->
     d = CampaignLoader.get auction_id
     d.then (res) -> 
       [$scope.campaign, $scope.auction, $scope.reaches] = res
 
-  d = UserManager.check()
-  d.success (user_id) ->
-    if not user_id
-      $location.path '/'
-      return
+  d = UserManager.checkRedirect()
+  d.then (user_id) ->
 
     auction_id = ~~$routeParams.auction_id  
 
     # $window.onbeforeunload = -> 'All entered data will be lost if you did not save your data.'
-
     loadCampaign auction_id
 
   $scope.getActiveSlots = ->
@@ -123,21 +107,29 @@ global.CampaignDetailCtrl = ($scope, $routeParams, $log, $location, $window, Use
     campaign_reduced = _.pick $scope.campaign, ['id', 'auction_id', 'user_id']
     campaign_reduced.published = 1
     d = CampaignManager.save campaign_reduced
-    d.then (res) -> $scope.campaign.published = 1
+    d.then (res) -> 
+      $scope.campaign.published = 1
+      $log.log 'successfully published', res
 
   $scope.unpublishCampaign = ->    
     campaign_reduced = _.pick $scope.campaign, ['id', 'auction_id', 'user_id']
     campaign_reduced.published = 0
     d = CampaignManager.save campaign_reduced
-    d.then (res) -> $scope.campaign.published = 0
+    d.then (res) -> 
+      $scope.campaign.published = 0
+      $log.log 'successfully unpublished', res
 
   $scope.deleteCampaign = ->
     auction_id = $scope.campaign.auction_id
     d = CampaignManager.delete auction_id
     d.then (res) ->
-      $log.log 'successfully deleted'
+      $log.log 'successfully deleted', res
       loadCampaign auction_id
-
+      $dialog
+        .messageBox('Cleared', 'The campaign was successfully cleared.', [{label:'continue',result:'continue'},{label:'return to campaigns',result:'return'}])
+        .open()
+        .then (res) ->
+          $location.path '/campaign' if res == 'return'
   
   $scope.incrementTarget = ->
     $scope.campaign.content.targets.push {quantity:0, budget: 0}
@@ -145,12 +137,9 @@ global.CampaignDetailCtrl = ($scope, $routeParams, $log, $location, $window, Use
   $scope.decrementTarget = ->
     $scope.campaign.content.targets.pop()
 
-global.CampaignDetailCalendarCtrl = ($scope, $routeParams, $log, $location, $window, UserManager, CampaignLoader, CampaignManager, AuctionManager) ->
-  d = UserManager.check()
-  d.success (user_id) ->
-    if not user_id
-      $location.path '/user/login'
-      return
+global.CampaignDetailCalendarCtrl = ($scope, $routeParams, $log, $window, UserManager, CampaignLoader, CampaignManager, AuctionManager) ->
+  d = UserManager.checkRedirect()
+  d.then (user_id) ->
 
     # $window.onbeforeunload = -> 'All entered data will be lost if you did not save your data.'
     auction_id = ~~$routeParams.auction_id
@@ -159,12 +148,9 @@ global.CampaignDetailCalendarCtrl = ($scope, $routeParams, $log, $location, $win
     d.then (res) -> [$scope.campaign, $scope.auction, $scope.reaches] = res
 
 
-global.CampaignDetailTargetTweakCtrl = ($scope, $routeParams, $log, $location, $window, UserManager, CampaignLoader, CampaignManager, AuctionManager) ->
-  d = UserManager.check()
-  d.success (user_id) ->
-    if not user_id
-      $location.path '/user/login'
-      return
+global.CampaignDetailTargetTweakCtrl = ($scope, $routeParams, $log, $window, UserManager, CampaignLoader, CampaignManager, AuctionManager) ->
+  d = UserManager.checkRedirect()
+  d.then (user_id) ->
 
     # $window.onbeforeunload = -> 'All entered data will be lost if you did not save your data.'
     auction_id = ~~$routeParams.auction_id
@@ -175,19 +161,17 @@ global.CampaignDetailTargetTweakCtrl = ($scope, $routeParams, $log, $location, $
 
     $scope.$watch 'reach_active', (newValue, oldValue) ->
       if newValue != oldValue
-        if not oldValue and not confirm('do you want to reset your custom target values?')
+        if not oldValue and not confirm('Do you want to reset your custom target values?')
           $scope.reach_active = null
         else
           $scope.campaign.updateReaches newValue.content.slot_reaches
     
     $scope.slotTrigger = true
 
-global.ResultCtrl = ($scope, $routeParams, $log, $location, $window, UserManager, ResultManager, CampaignLoader) ->
-  d = UserManager.check()
-  d.success (user_id) ->
-    if not user_id
-      $location.path '/user/login'
-      return
+global.ResultCtrl = ($scope, $routeParams, $log, UserManager, ResultManager, CampaignLoader) ->
+  d = UserManager.checkRedirect()
+  d.then (user_id) ->
+
     auction_id = ~~$routeParams.auction_id
 
     d = CampaignLoader.get auction_id
@@ -204,9 +188,3 @@ global.ResultCtrl = ($scope, $routeParams, $log, $location, $window, UserManager
     for slot in $scope.campaign.content.slots
       slots[slot.id] = slot if slot.id in $scope.result.slots
     return slots
-# HelpCtrl.$inject = ['$scope', '$location']
-# UserLoginCtrl.$inject = ['$scope', '$location', 'CacheManager', 'UserManager']
-# UserLogoutCtrl.$inject = ['$scope', '$location', 'UserManager']
-# CampaignDetailCtrl.$inject = ['$scope', '$q', '$routeParams', '$log', '$location', 'UserManager', 'CacheManager', 'CampaignManager','AuctionManager']
-# CampaignDetailCalendarCtrl.$inject = ['$scope', '$location', 'UserManager', 'CacheManager', 'CampaignManager','AuctionManager']
-# CampaignDetailTargetTweakCtrl.$inject = ['$scope', '$location', 'UserManager', 'CacheManager', 'CampaignManager','AuctionManager']

@@ -1,5 +1,16 @@
-h1 Create Campaign - Details
+h1 Edit Campaign - Details
 h2
   | Calendar
-  span.info You can assign indiviudal slots here
+  span.info You can assign indiviudal slots here. Zoom and drag with your mouse.
 .campaigncalendar(campaigncalendar, ng-model='campaign.content.slots')
+
+  
+h2
+  | Actions
+  span.info You can save your changes after returning to your campaign.
+.row
+  .span9(style="text-align:right;")
+    a.btn.btn-large(ng-href="#/campaign/edit/{{auction.id}}")
+      i.icon-arrow-left
+      |  Return To Campaign
+hr

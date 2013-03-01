@@ -149,11 +149,12 @@ h2
       |  Publish
     button.btn.btn-large(ng-show="campaign.published == 1", ng-click="unpublishCampaign()", ng-disabled="auction.isLocked()")
       i.icon-download
-      |  Unpublish      
+      |  Unpublish
     button.btn.btn-large(ng-click="saveCampaign()", ng-disabled="campaign.published || auction.isLocked()")
       i.icon-ok
       |  Save Campaign
-    button.btn.btn-large.btn-danger(ng-click="deleteCampaign()", ng-disabled="campaign.published || auction.isLocked()")
+    button.btn.btn-large.btn-danger(ng-click="deleteCampaign()", ng-disabled="campaign.published || auction.isLocked() || !campaign.id")
       i.icon-trash.icon-white
       |  Delete
+
 hr

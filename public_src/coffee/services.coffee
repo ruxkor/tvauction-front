@@ -82,26 +82,59 @@ mockAuction.slots = _.map slot_dates, (slot_date, nr) ->
 # 
 # tvAuction.services
 #
-module = angular.module 'tvAuction.services' , []
+module = angular.module 'tvAuction.services' , ['ui.bootstrap.dialog']
 
 module.factory 'UuidManager' , ['$log', ($log) ->
   uuid = {v4: `function(a,b){for(b=a='';a++<36;b+=a*51&52?(a^15?8^Math.random()*(a^20?16:4):4).toString(16):'-');return b}`} # https://gist.github.com/1308368
   return uuid
 ]
 
-module.factory 'UserManager', ['$http','$q','$log', ($http, $q, $log) ->
+module.factory 'UserManager', ['$http','$q','$log','$location', ($http, $q, $log, $location) ->
   return {
-    # logs the user in, i.e. returns it's user id and a session token
+    # logs the user in, i.e. returns it's user id
     login: (email, password) ->
-      return $http.post 'user/login', {email:email, password: password}
-    # checks if the user is still logged in, returning his user id
+      d = $q.defer()
+      req = $http.post 'user/login', {email:email, password: password}
+      req.success (res) ->
+        d.resolve ~~res
+      req.error (res, status) ->
+        $log.log status, res
+        d.reject res
+      return d.promise        
     logout: ->
-      return $http.get 'user/logout'
-    check: ->
-      return $http.get 'user/check'
+      d = $q.defer()
+      req = $http.get 'user/logout'
+      req.success (res) ->
+        d.resolve ~~res
+      req.error (res, status) ->
+        $log.log status, res
+        d.reject res
+      return d.promise
+    # checks if the user is still logged in, returning his user id
+    check: (require_guest) ->
+      d = $q.defer()
+      req = $http.get 'user/check'
+      req.success (res) ->
+        res = ~~res
+        if res and not require_guest or not res and require_guest
+          d.resolve res
+        else
+          d.reject res
+      req.error (res, status) ->
+        $log.log status, res
+        d.reject res
+      return d.promise
+    checkRedirect: (require_guest) ->
+      d = @check require_guest
+      forward = (res) -> res
+      redirect = (res) -> 
+        $location.path '/user/login'
+        throw new Error 'not logged in'
+      d.then forward, redirect
+      return d
   }
-
 ]
+
 module.factory 'CacheManager', ['$http', '$q', '$log', ($http, $q, $log) ->
   _cache = {}
   return {
@@ -132,7 +165,7 @@ module.factory 'AuctionManager', ['$http', '$q', '$log', ($http, $q, $log) ->
         d.resolve res
       req.error (res, status) ->
         $log.log status, res
-        d.reject (res)
+        d.reject res
       return d.promise
     get: (auction_id, use_cache) ->
       d = $q.defer()

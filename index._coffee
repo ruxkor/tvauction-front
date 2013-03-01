@@ -22,16 +22,14 @@ if config.help
   process.exit()
 
 checkSession = (req, res, next) ->
-  next()
-  return
   url = urlparser.parse req.url, true
-  if url.pathname.match(/^\/[^\/]*$/) or url.pathname.match(/^\/(js|lib|css|partials|test)\//) or url.pathname.match(/^\/user\/(login|logout|check)$/)
-    next()
-    return
-  else if not req.session.auth
+  matches = [/^\/$/, /^\/help$/, /^\/(js|lib|css|partials|test)\//, /^\/user\/(login|check)$/]
+  matched = matches.some (r) -> url.pathname.match r
+  if not matched and not req.session.auth
     res.writeHead 403
     res.end 'not authenticated'
-    return
+  else
+    next()
 
 checkIntValue = (valName) ->
   (req, res, next, id) ->
