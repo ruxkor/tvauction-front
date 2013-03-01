@@ -13,7 +13,7 @@ global.IndexCtrl = ($scope, $location, UserManager) ->
 global.HelpCtrl = ($scope, $location) ->
   
 
-global.UserLoginCtrl = ($scope, $location, CacheManager, UserManager) ->
+global.UserLoginCtrl = ($scope, $location, UserManager) ->
   $scope.alreadyLoggedIn = null
   d = UserManager.check()
   d.then (user_id) -> $scope.alreadyLoggedIn = true
@@ -26,7 +26,6 @@ global.UserLoginCtrl = ($scope, $location, CacheManager, UserManager) ->
     d = UserManager.login $scope.user.email, $scope.user.password
     d.then (user_id) ->
       if user_id
-        CacheManager.set 'user_id', user_id
         $location.path '/auction'
       else
         $scope.credentialsInvalid = true

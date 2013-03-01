@@ -18,7 +18,7 @@ while [ 1 ]; do
 	[ -n "$RES_JADE" ] && notify-send "jade error" && echo "$RES_JADE"
 	[ -n "$RES_COFFEE" ] && notify-send "coffee error" && echo "$RES_COFFEE"
 	echo $RES
-	inotifywait -r -e modify -q public_src test
+	inotifywait -r -e modify -q public_src test test_frontend
 	echo -e "----\n\n"
 	done
 
