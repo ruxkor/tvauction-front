@@ -31,7 +31,7 @@ global.UserLoginCtrl = ($scope, $location, UserManager) ->
       else
         $scope.credentialsInvalid = true
 
-global.UserLogoutCtrl = ($scope, $location, UserManager) ->
+global.UserLogoutCtrl = ($scope, $location, UserManager, AuctionManager, CampaignManager, ResultManager) ->
   $scope.breadcrumbs = [['User',''], ['Log Out','user/logout']]
   $scope.successful = null
   $scope.notLoggedIn = null
@@ -48,6 +48,9 @@ global.UserLogoutCtrl = ($scope, $location, UserManager) ->
         .then(
           (res) ->
           $scope.successful = true
+          AuctionManager.reset()
+          CampaignManager.reset()
+          ResultManager.reset()
           goHome()
         , (res) ->
           $scope.successful = false
@@ -58,11 +61,13 @@ global.UserLogoutCtrl = ($scope, $location, UserManager) ->
   )
 
 
-global.AuctionCtrl = ($scope, UserManager, AuctionManager) ->
+global.AuctionCtrl = ($scope, UserManager, CampaignManager, AuctionManager) ->
   UserManager.checkRedirect().then (user_id) ->
     $scope.breadcrumbs = [['Auction','auction']]
     
     $scope.now = new Date()
+    AuctionManager.reset()
+    CampaignManager.reset()
     d = AuctionManager.list()
     d.then (auctions) ->
       $scope.auctions = auctions
@@ -84,6 +89,8 @@ global.CampaignCtrl = ($scope, $window, UserManager, CampaignManager, AuctionMan
     $scope.breadcrumbs = [['Campaign','campaign']]
 
     # $window.onbeforeunload = null
+    AuctionManager.reset()
+    CampaignManager.reset()
     d = CampaignManager.list()
     d.then (campaigns) ->
       $scope.campaigns = campaigns
@@ -95,6 +102,9 @@ global.CampaignDetailCtrl = ($scope, $routeParams, $log, $location, $window, $di
 
     # $window.onbeforeunload = -> 'All entered data will be lost if you did not save your data.'
     $scope.loadCampaign auction_id
+
+  $scope.isLocked = ->
+    $scope.auction and $scope.auction.isLocked() or $scope.campaign and $scope.campaign.published
 
   $scope.getActiveSlots = ->
     if $scope.campaign then _.filter $scope.campaign.content.slots, (slot) -> slot.active or slot.forced else []
@@ -117,11 +127,9 @@ global.CampaignDetailCtrl = ($scope, $routeParams, $log, $location, $window, $di
       $log.log 'successfully saved', res
 
   $scope.publishCampaign = ->
-    campaign_reduced = _.pick $scope.campaign, ['id', 'auction_id', 'user_id']
-    campaign_reduced.published = 1
-    d = CampaignManager.save campaign_reduced
+    $scope.campaign.published = 1
+    d = CampaignManager.save $scope.campaign
     d.then (res) -> 
-      $scope.campaign.published = 1
       $log.log 'successfully published', res
 
   $scope.unpublishCampaign = ->    

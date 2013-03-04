@@ -155,6 +155,8 @@ module.factory 'AuctionManager', ['$http', '$q', '$log', ($http, $q, $log) ->
   $log.log 'initializing AuctionManager'
   _cache = {}
   return {
+    reset: ->
+      _cache = {}
     list: ->
       d = $q.defer()
       req = $http.get '/auction'
@@ -257,6 +259,8 @@ module.factory 'CampaignManager', ['AuctionManager', 'UuidManager', '$http', '$q
   $log.log 'initializing CampaignManager'
   _cache = {}
   return {
+    reset: ->
+      _cache = {}
     create: (auction_id, use_cache) ->
       campaign = new Campaign auction_id
       _cache[auction_id] = campaign if use_cache != false
@@ -333,6 +337,8 @@ module.factory 'ResultManager', ['UuidManager', '$http', '$q', '$log', (uuid, $h
 
   _cache = {}
   return {
+    reset: -> 
+      _cache = {}
     get: (auction_id, use_cache) ->
       d = $q.defer()
       if auction_id and use_cache != false and auction_id of _cache

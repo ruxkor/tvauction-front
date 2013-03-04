@@ -7,5 +7,5 @@ while true; do
 	[ $PID -ne 0 ] && kill $PID
 	DEBUG=tvauction:* _coffee --fibers index._coffee &
 	PID=$!
-	inotifywait -qq -e modify index._coffee app/*._coffee
+	inotifywait -q -e modify index._coffee app/*._coffee
 done
