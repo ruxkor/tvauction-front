@@ -1,12 +1,12 @@
 test:
 	@mocha -R spec --compilers coffee:coffee-script,_coffee:streamline/register
 
-develop: compile-front nodemon
+develop: compile-front monitor
 
 compile-front:
 	@./scripts/compile_frontend.sh
 
-nodemon:
-	@DEBUG=tvauction:* nodemon -e "._coffee" -x _coffee --fibers index._coffee
+monitor:
+	@./scripts/monitor.sh
 
-.PHONY: test develop nodemon compile-front
+.PHONY: test develop monitor compile-front

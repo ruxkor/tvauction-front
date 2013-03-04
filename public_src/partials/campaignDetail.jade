@@ -14,12 +14,13 @@ h2
   | Targets
   span.info Please specifiy your desired targets and their respective maximum budgets.
 .row
-  .span7
+  .span8
     table.table.table-condensed
       thead
         tr
           th target quantity
-          th maximum budget
+          th budget (max)
+          th CPM (max)
           th &nbsp;
       tbody
         tr(ng-repeat="target in campaign.content.targets")
@@ -28,13 +29,14 @@ h2
             .input-append
               input.input-medium(type="number", min="{{campaign.minBudget(target.quantity)}}", step="100", ng-model="target.budget", required, ng-disabled="auction.isLocked()")
               span.add-on &euro;
+          td
+            input.input-small(type="text", disabled="disabled", value="{{target.budget/(target.quantity*1000) | number:2}}")
           td.span2
             button.btn.btn-link(ng-show="$last && $index < 2", ng-click="incrementTarget()", ng-disabled="auction.isLocked()"): i.icon-plus
             button.btn.btn-link(ng-show="$last && $index > 0", ng-click="decrementTarget()", ng-disabled="auction.isLocked()"): i.icon-minus
 
-  .span2
-    span.info.pull-right
-      a(href="#/campaign/targetTweak/{{campaign.auction_id}}") details / change target
+  span.info.pull-right
+    a(href="#/campaign/targetTweak/{{campaign.auction_id}}") change target
 
 // advert
 h2
@@ -78,8 +80,8 @@ h2
           td: a(href="#/campaign/calendar/{{campaign.auction_id}}") details
         tr
           td target pts.
-          td {{campaign.content.slots.length}}
-          td {{getActiveSlots().length}}
+          td {{getTargetPoints(campaign.content.slots) | number}}
+          td {{getTargetPoints(getActiveSlots()) | number}}
           td &nbsp;
 
 h2
@@ -157,5 +159,3 @@ h2
     button.btn.btn-large.btn-danger(ng-click="deleteCampaign()", ng-disabled="campaign.published || auction.isLocked() || !campaign.id")
       i.icon-trash.icon-white
       |  Delete
-
-hr

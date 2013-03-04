@@ -99,6 +99,9 @@ global.CampaignDetailCtrl = ($scope, $routeParams, $log, $location, $window, $di
   $scope.getActiveSlots = ->
     if $scope.campaign then _.filter $scope.campaign.content.slots, (slot) -> slot.active or slot.forced else []
 
+  $scope.getTargetPoints = (slots) ->
+    _.reduce slots, ((memo, slot) -> memo + slot.target), 0
+
   $scope.$watch 'campaign.content.restrictions', (newValue, oldValue) ->
     $scope.campaign.applyRestrictions() if $scope.campaign
   , true
