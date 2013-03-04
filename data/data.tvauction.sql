@@ -32,8 +32,11 @@ UNLOCK TABLES;
 
 LOCK TABLES `user` WRITE;
 /*!40000 ALTER TABLE `user` DISABLE KEYS */;
-INSERT INTO `user` (`id`, `email`, `password`) VALUES (1,'test@test.com','$2a$10$zAPC12E6sSOaSZPr56di4.e/SEMtSdJ9XhZH.jajBdDk/eYRNMkhG'),
-(2,'test2@test.com','$2a$10$zAPC12E6sSOaSZPr56di4.e/SEMtSdJ9XhZH.jajBdDk/eYRNMkhG');
+INSERT INTO `user` (`id`, `email`, `password`) VALUES 
+(1,'test@test.com','$2a$10$zAPC12E6sSOaSZPr56di4.e/SEMtSdJ9XhZH.jajBdDk/eYRNMkhG'), 
+(2,'test2@test.com','$2a$10$zAPC12E6sSOaSZPr56di4.e/SEMtSdJ9XhZH.jajBdDk/eYRNMkhG'), 
+(3,'test3@test.com','$2a$10$zAPC12E6sSOaSZPr56di4.e/SEMtSdJ9XhZH.jajBdDk/eYRNMkhG'), 
+(4,'test4@test.com','$2a$10$zAPC12E6sSOaSZPr56di4.e/SEMtSdJ9XhZH.jajBdDk/eYRNMkhG');
 /*!40000 ALTER TABLE `user` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

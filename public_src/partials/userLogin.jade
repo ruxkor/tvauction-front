@@ -1,14 +1,15 @@
-
+div(breadcrumb, breadcrumbs="breadcrumbs")
+  
 h2 
   | Login
   span.info Please insert your email and password
 
-.alert(ng-show="alreadyLoggedIn")
+#already-logged-in.alert(ng-show="alreadyLoggedIn")
   strong Already Logged In
   |  You are already logged in. 
   a(ng-href="#/campaign") Go to your campaigns
 
-.alert(ng-show="credentialsInvalid")
+#credentials-invalid.alert(ng-show="credentialsInvalid")
   strong Invalid Credentials
   |  Your email/password combination is invalid.
 

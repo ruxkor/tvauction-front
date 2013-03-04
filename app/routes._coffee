@@ -2,6 +2,7 @@
 
 __ = require 'underscore'
 bcrypt = require 'bcrypt'
+debug = require('debug')('tvauction:routes')
 
 handleError = (err) ->
   throw err if err
@@ -32,12 +33,16 @@ module.exports = (config, db) ->
             session.user_id = rows[0].id
             session.auth = true
 
+      debug 'user %s logged in. user_id: %d', email, session.user_id if session.user_id
+      debug 'user %s could not log in', email unless session.user_id
+
       res.end ''+session.user_id
 
 
     # logs the user out by deleting his session
     # returns user_id 0 (i.e. logged out)
     logout: (req, res) ->
+      debug 'user %d logged out', req.session and req.session.user_id
       req.session = null
       res.end "0"
 
@@ -67,6 +72,7 @@ module.exports = (config, db) ->
     show: (req, res, next, _) ->
       auction_id = req.params.auction_id
       rows = db.query 'SELECT * from auction WHERE id=?', [auction_id], _
+      debug 'got auction %d', auction_id if rows.length
       if not rows.length
         res.writeHead 404
         res.end()
@@ -98,6 +104,7 @@ module.exports = (config, db) ->
     show: (req, res, next, _) ->
       auction_id = req.params.auction_id
       rows = db.query 'SELECT * from campaign WHERE auction_id=? and user_id=?', [auction_id, req.session.user_id], _
+      debug 'got campaign %d for user %d', auction_id, req.session.user_id if rows.length
       if not rows.length
         res.writeHead 404
         res.end()
@@ -125,6 +132,7 @@ module.exports = (config, db) ->
 
       params = [campaign]
       rows = db.query 'INSERT INTO campaign SET ?', params, _
+      debug 'created campaign %d for user %d', auction_id, req.session.user_id if rows.affectedRows
       res.end ''+rows.insertId
 
 
@@ -148,6 +156,7 @@ module.exports = (config, db) ->
       params = [campaign, auction_id, req.session.user_id]
       rows = db.query 'UPDATE campaign SET ? WHERE auction_id=? AND user_id=?', params, _
       
+      debug 'updated campaign %d for user %d', auction_id, req.session.user_id if rows.affectedRows
       if rows.affectedRows
         params = [auction_id, req.session.user_id]
         rows = db.query 'SELECT id FROM campaign WHERE auction_id=? AND user_id=?', params, _
@@ -167,6 +176,7 @@ module.exports = (config, db) ->
 
       params = [auction_id, req.session.user_id]
       rows = db.query 'DELETE FROM campaign WHERE auction_id=? AND user_id=?', params, _
+      debug 'deleted campaign %d for user %d', auction_id, req.session.user_id if rows.affectedRows
       res.end ''+rows.affectedRows
 
   # result routes
@@ -185,7 +195,6 @@ module.exports = (config, db) ->
         res.end()
       else
         result_data = JSON.parse rows[0].content
-        console.info result_data
         winning_bid = result_data.winners
           .filter((b) -> b[0]==user_id)
           .map((b) -> b[1])[0]

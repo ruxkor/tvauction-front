@@ -6,31 +6,18 @@ head
     link(rel='stylesheet', href='lib/bootstrap/css/bootstrap.css')
     link(rel='stylesheet', href='css/app.css')
   body
-
-    .navbar
-      .navbar-inner
-        .container
-          a.brand(ng-href='#/') TvAuction
-          ul.nav
-            li: a(href='#')
     .row
-      // left side menu
-      .span3
-        ul.nav.nav-list
-          li.nav-header Campaigns
-          li: a(ng-href='#/campaign') List Campaigns
-
-          li.nav-header Auctions
-          li: a(ng-href='#/auction') List Auctions
-
-          li.nav-header Support
-          li: a(ng-href='#/help') Help
-
-          li.nav-header User
-          li: a(ng-href='#/user/login') Log In
-          li: a(ng-href='#/user/logout') Log Out
-
-      .span9
+      .span9.center
+        .navbar
+          .navbar-inner
+            .container
+              a.brand(ng-href='#/') TvAuction
+              ul.nav
+                li: a(ng-href='#/campaign') List Campaigns
+                li: a(ng-href='#/auction') List Auctions
+                li: a(ng-href='#/help') Help
+                li: a(ng-href='#/user/login') Log In
+                li: a(ng-href='#/user/logout') Log Out
         div(ng-view)
 
     script(src='lib/jquery/jquery-1.7.2.js')

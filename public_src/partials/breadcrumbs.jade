@@ -1,0 +1,5 @@
+ul.breadcrumb
+	li(ng-repeat="data in breadcrumbs")
+		a(ng-hide="$last", ng-href="#/{{data[1]}}") {{data[0]}}
+		span.divider(ng-hide="$last") / 
+		a.active(ng-show="$last", ng-href="#/{{data[1]}}") {{data[0]}}

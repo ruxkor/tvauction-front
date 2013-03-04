@@ -11,9 +11,10 @@ global.IndexCtrl = ($scope, $location, UserManager) ->
     return
 
 global.HelpCtrl = ($scope, $location) ->
-  
+  $scope.breadcrumbs = [['Help','help']]
 
 global.UserLoginCtrl = ($scope, $location, UserManager) ->
+  $scope.breadcrumbs = [['User',''], ['Log In','user/login']]
   $scope.alreadyLoggedIn = null
   d = UserManager.check()
   d.then (user_id) -> $scope.alreadyLoggedIn = true
@@ -31,6 +32,7 @@ global.UserLoginCtrl = ($scope, $location, UserManager) ->
         $scope.credentialsInvalid = true
 
 global.UserLogoutCtrl = ($scope, $location, UserManager) ->
+  $scope.breadcrumbs = [['User',''], ['Log Out','user/logout']]
   $scope.successful = null
   $scope.notLoggedIn = null
   goHome = ->
@@ -58,6 +60,7 @@ global.UserLogoutCtrl = ($scope, $location, UserManager) ->
 
 global.AuctionCtrl = ($scope, UserManager, AuctionManager) ->
   UserManager.checkRedirect().then (user_id) ->
+    $scope.breadcrumbs = [['Auction','auction']]
     
     $scope.now = new Date()
     d = AuctionManager.list()
@@ -68,6 +71,8 @@ global.AuctionViewCtrl = ($scope, $routeParams, UserManager, AuctionManager) ->
   UserManager.checkRedirect().then (user_id) ->
 
     auction_id = ~~$routeParams.auction_id
+    $scope.breadcrumbs = [['Auction','auction'], ['# '+auction_id, "auction/#{auction_id}"]]
+
     d = AuctionManager.get auction_id
     d.then (res) ->
       $scope.auction = res.auction
@@ -76,6 +81,7 @@ global.AuctionViewCtrl = ($scope, $routeParams, UserManager, AuctionManager) ->
 
 global.CampaignCtrl = ($scope, $window, UserManager, CampaignManager, AuctionManager) ->
   UserManager.checkRedirect().then (user_id) ->
+    $scope.breadcrumbs = [['Campaign','campaign']]
 
     # $window.onbeforeunload = null
     d = CampaignManager.list()
@@ -84,8 +90,8 @@ global.CampaignCtrl = ($scope, $window, UserManager, CampaignManager, AuctionMan
 
 global.CampaignDetailCtrl = ($scope, $routeParams, $log, $location, $window, $dialog, UserManager, CampaignLoader, CampaignManager, AuctionManager) ->
   UserManager.checkRedirect().then (user_id) ->
-
     auction_id = ~~$routeParams.auction_id  
+    $scope.breadcrumbs = [['Campaign','campaign'], ['# '+auction_id, "campaign/edit/#{auction_id}"]]
 
     # $window.onbeforeunload = -> 'All entered data will be lost if you did not save your data.'
     $scope.loadCampaign auction_id
@@ -146,6 +152,7 @@ global.CampaignDetailCalendarCtrl = ($scope, $routeParams, $log, $window, UserMa
 
     # $window.onbeforeunload = -> 'All entered data will be lost if you did not save your data.'
     auction_id = ~~$routeParams.auction_id
+    $scope.breadcrumbs = [['Campaign','campaign'], ['# '+auction_id, "campaign/edit/#{auction_id}"], ['Calendar', "campaign/calendar/#{auction_id}"]]
 
     d = CampaignLoader.get auction_id
     d.then (res) -> [$scope.campaign, $scope.auction, $scope.reaches] = res
@@ -156,6 +163,7 @@ global.CampaignDetailTargetTweakCtrl = ($scope, $routeParams, $log, $window, Use
 
     # $window.onbeforeunload = -> 'All entered data will be lost if you did not save your data.'
     auction_id = ~~$routeParams.auction_id
+    $scope.breadcrumbs = [['Campaign','campaign'], ['# '+auction_id, "campaign/edit/#{auction_id}"], ['Target Tweak', "campaign/targetTweak/#{auction_id}"]]
 
     d = CampaignLoader.get auction_id
     d.then (res) -> 
@@ -174,7 +182,8 @@ global.ResultCtrl = ($scope, $routeParams, $log, UserManager, ResultManager, Cam
   UserManager.checkRedirect().then (user_id) ->
 
     auction_id = ~~$routeParams.auction_id
-
+    $scope.breadcrumbs = [['Campaign','/campaign'], ['# '+auction_id, "campaign/edit/#{auction_id}"], ['Result', "result/#{auction_id}"]]
+    
     d = CampaignLoader.get auction_id
     d.then (res) -> 
       [$scope.campaign, $scope.auction, $scope.reaches] = res

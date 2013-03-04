@@ -6,10 +6,8 @@ files = [
   'test_frontend/e2e/**/*.js'
 ];
 
-autoWatch = false;
-
 browsers = ['Chrome'];
-
+autoWatch = false;
 singleRun = true;
 
 proxies = {

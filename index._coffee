@@ -1,6 +1,6 @@
 'use strict'
 
-debug = require('debug')('tvauction')
+debug = require('debug')('tvauction:server')
 http = require 'http'
 fs = require 'fs'
 path = require 'path'
@@ -48,7 +48,7 @@ app.configure ->
   app.set 'views', path.join(__dirname, '/views')
   app.set 'view engine', 'jade'
   app.use express.favicon()
-  app.use express.logger('dev')
+  # app.use express.logger('dev')
   app.use express.bodyParser()
   app.use express.methodOverride()
   app.use express.cookieParser('blabla')

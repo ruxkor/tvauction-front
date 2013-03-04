@@ -10,6 +10,15 @@ module.directive 'appVersionBla', ['version' , (version) ->
     elm.text version
 ]
 
+module.directive 'breadcrumbs', ->
+  directive = 
+    restrict: 'A'
+    replace: true
+    templateUrl: 'partials/breadcrumbs.html'
+    scope:
+      breadcrumbs: '='
+  return directive
+  
 module.directive 'campaignminbudget', ->
   directive =
     require: 'ngModel'
