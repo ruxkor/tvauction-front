@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "repository": {
     "type": "git",
-    "url": "tracker@anata-it.de:mt-proto3-front.git"
+    "url": "https://github.com/ruxkor/tvauction-front.git"
   },
   "dependencies": {
       "debug": "0.7"
