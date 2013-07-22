@@ -8,11 +8,10 @@ div(breadcrumb, breadcrumbs="breadcrumbs")
   strong logged out
   |  you were successfully logged out. click 
   a(ng-href="/") here
-  |  to return to the main page (or wait for 3 seconds).
+  |  to return to the main page.
 
 
-strong logging you out...
-span(ng-hide="notLoggedIn") you are currently being logged out
+strong logging you out&hellip;
+span(ng-hide="notLoggedIn")  you are currently being logged out
 
-span(ng-show="notLoggedIn") 
-  | you are already logged out.
+span(ng-show="notLoggedIn")  you are already logged out.

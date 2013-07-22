@@ -43,7 +43,7 @@ class AuctionModel
   saveResult: (id, result, _) ->
     debug 'saveResult - id: %d', id
     revenue = (v for k,v of result.prices_final).reduce(((a,b) -> a+b),0)
-    rows = @db.query 'INSERT IGNORE INTO result (auction_id, revenue, content) VALUES (?,?,?)', [id, revenue, JSON.stringify(result)], _
+    rows = @db.query 'INSERT INTO result (auction_id, revenue, content) VALUES (?,?,?)', [id, revenue, JSON.stringify(result)], _
     return rows.length
 
   transform: (auction_data) ->
